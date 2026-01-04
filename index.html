@@ -121,117 +121,120 @@
   </div>
 
     <script>
-    // === IP -> TARGET mappings ===
-    const MAP = new Map([
-      ["347.58.5476.9356", "index.html"],
-      ["72.1004.458.1084", "mailbox.html"],
-      ["10.10.10.10", "news.html"],
-      ["347.17.458.9356", "https://chatgpt.com/g/g-692207c52cf48191b2ff61d54edd8521-murdermystery-barman"],
-      ["5750.1004.73.42", "https://chatgpt.com/g/g-695435c297b88191b4936f581a90c2e6-murdermystery-joanna"],
-      ["72.58.73.42", "https://www.youtube.com/watch?v=xvFZjo5PgG0"],
-    ]);
-  
-    const STORAGE_KEY = "mm_unlocked_ips_v1";
-  
-    const out = document.getElementById("out");
-    const ipInput = document.getElementById("ip");
-    const btnGo = document.getElementById("go");
-    const btnClear = document.getElementById("clear");
-    const links = document.getElementById("links");
-  
-    function log(line, cls){
-      const span = document.createElement("span");
-      if (cls) span.className = cls;
-      span.textContent = line + "\n";
-      out.appendChild(span);
-      out.scrollTop = out.scrollHeight;
-    }
-  
-    function getUnlockedIPs(){
-      try{
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      }catch{
-        return [];
-      }
-    }
-  
-    function unlockIP(ip){
-      const unlocked = new Set(getUnlockedIPs());
-      unlocked.add(ip);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...unlocked]));
-      updateQuickLinks();
-    }
-  
-    function updateQuickLinks(){
-      const unlocked = new Set(getUnlockedIPs());
-      let anyVisible = false;
-  
-      document.querySelectorAll("[data-ip]").forEach(a=>{
-        const ip = a.getAttribute("data-ip");
-        if (unlocked.has(ip)){
-          a.style.display = "inline-block";
-          anyVisible = true;
-        } else {
-          a.style.display = "none";
-        }
-      });
-  
-      links.style.display = anyVisible ? "flex" : "none";
-    }
-  
-    function openInNewTab(url){
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w){
-        log("[WARN] Popup blocked. Click link:", "warn");
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.textContent = url;
-        out.appendChild(a);
-        out.appendChild(document.createTextNode("\n"));
-      }
-    }
-  
-    async function connect(ip){
-      out.textContent = "";
-      const target = MAP.get(ip);
-  
-      if(!target){
-        log("[ERROR] Unknown IP. Access denied.", "err");
-        return;
-      }
-  
-      log("Correct IP, opening page.", "muted");
-  
-      // ✅ unlock enkel deze IP
-      unlockIP(ip);
-  
-      await new Promise(r => setTimeout(r, 200));
-      openInNewTab(target);
-    }
-  
-    btnGo.addEventListener("click", () => connect(ipInput.value.trim()));
-    btnClear.addEventListener("click", () => (out.textContent="", ipInput.focus()));
-  
-    ipInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") connect(ipInput.value.trim());
-    });
-  
-    document.querySelectorAll("[data-ip]").forEach(a=>{
-      a.addEventListener("click",(e)=>{
-        e.preventDefault();
-        const ip = a.getAttribute("data-ip");
-        ipInput.value = ip;
-        connect(ip);
-      });
-    });
-  
-    // Bij laden: toon enkel reeds ontgrendelde snelkoppelingen
+  const MAP = new Map([
+    ["347.58.5476.9356", "index.html"],
+    ["72.1004.458.1084", "mailbox.html"],
+    ["10.10.10.10", "news.html"],
+    ["347.17.458.9356", "https://chatgpt.com/g/g-692207c52cf48191b2ff61d54edd8521-murdermystery-barman"],
+    ["5750.1004.73.42", "https://chatgpt.com/g/g-695435c297b88191b4936f581a90c2e6-murdermystery-joanna"],
+    ["72.58.73.42", "https://www.youtube.com/watch?v=xvFZjo5PgG0"],
+  ]);
+
+  const STORAGE_KEY = "mm_unlocked_ips_v1";
+
+  const out = document.getElementById("out");
+  const ipInput = document.getElementById("ip");
+  const btnGo = document.getElementById("go");
+  const btnClear = document.getElementById("clear");
+  const links = document.getElementById("links");
+
+  function log(line, cls){
+    const span = document.createElement("span");
+    if (cls) span.className = cls;
+    span.textContent = line + "\n";
+    out.appendChild(span);
+    out.scrollTop = out.scrollHeight;
+  }
+
+  function getUnlockedIPs(){
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function unlockIP(ip){
+    const unlocked = new Set(getUnlockedIPs());
+    unlocked.add(ip);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...unlocked]));
     updateQuickLinks();
-    ipInput.focus();
-  </script>
+  }
+
+  function updateQuickLinks(){
+    const unlocked = new Set(getUnlockedIPs());
+    let anyVisible = false;
+
+    document.querySelectorAll("[data-ip]").forEach(a=>{
+      const ip = a.getAttribute("data-ip");
+      const visible = unlocked.has(ip);
+      a.style.display = visible ? "inline-block" : "none";
+      if (visible) anyVisible = true;
+    });
+
+    links.style.display = anyVisible ? "flex" : "none";
+  }
+
+  // ✅ Open tab onmiddellijk (binnen user-gesture), pas daarna url instellen
+  function openInNewTabImmediate(url){
+    const w = window.open("about:blank", "_blank", "noopener,noreferrer");
+
+    if (!w){
+      log("[WARN] Popup blocked. Klik de link hieronder:", "warn");
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = url;
+      a.style.color = "inherit";
+      out.appendChild(a);
+      out.appendChild(document.createTextNode("\n"));
+      return;
+    }
+
+    // Optioneel mini-delay voor "feel" zonder popup-block
+    // (tab is al geopend, dus dit is veilig)
+    setTimeout(() => { w.location.href = url; }, 50);
+  }
+
+  function connect(ip){
+    out.textContent = "";
+    const target = MAP.get(ip);
+
+    if(!target){
+      log("[ERROR] Unknown IP. Access denied.", "err");
+      return;
+    }
+
+    log("Correct IP, opening page.", "muted");
+
+    // ✅ unlock enkel deze ip
+    unlockIP(ip);
+
+    // ✅ open in nieuwe tab (betrouwbaar)
+    openInNewTabImmediate(target);
+  }
+
+  btnGo.addEventListener("click", () => connect(ipInput.value.trim()));
+  btnClear.addEventListener("click", () => (out.textContent="", ipInput.focus()));
+
+  ipInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") connect(ipInput.value.trim());
+  });
+
+  // quick links
+  document.querySelectorAll("[data-ip]").forEach(a=>{
+    a.addEventListener("click",(e)=>{
+      e.preventDefault();
+      const ip = a.getAttribute("data-ip");
+      ipInput.value = ip;
+      connect(ip);
+    });
+  });
+
+  updateQuickLinks();
+  ipInput.focus();
+</script>
+
 
 </body>
 </html>
+
 
