@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Secure CAM 2025</title>
+
+<style>
+:root{
+  --bg:#0e1116; --card:#151a22; --text:#e7e7e7; --muted:#9aa4b2;
+}
+body{
+  margin:0; font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg); color:var(--text);
+}
+.wrap{ max-width:900px; margin:0 auto; padding:28px; }
+.card{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px; padding:22px;
+}
+h1,h2{ margin:0 0 12px; }
+p{ color:var(--muted); margin:8px 0; }
+
+input{
+  width:100%; max-width:320px; padding:10px 12px; margin:6px 0;
+  border-radius:10px; border:1px solid rgba(255,255,255,.15);
+  background:#0b0e13; color:var(--text);
+}
+
+button{
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:#0b0e13;
+  color:var(--text);
+  cursor:pointer;
+}
+button:hover{ filter:brightness(1.1); }
+
+.hidden{ display:none; }
+
+/* DASHBOARD BUTTONS */
+.cam-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-top:18px;
+}
+.cam-btn{
+  background:#0b0e13;
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:18px;
+  padding:28px 20px;
+  text-align:center;
+  cursor:pointer;
+}
+.cam-btn:hover{ filter:brightness(1.15); }
+.cam-icon{
+  font-size:46px;
+  margin-bottom:12px;
+}
+.cam-name{
+  font-size:18px;
+  font-weight:600;
+}
+
+/* IMAGES */
+.imgs img{
+  width:100%;
+  max-width:820px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  margin:12px 0;
+}
+
+.footer{ font-size:12px; color:var(--muted); margin-top:12px; }
+
+/* TABLE */
+table { width:100%; border-collapse:collapse; margin-top:14px; }
+thead tr{ text-align:left; border-bottom:1px solid rgba(255,255,255,.15); }
+th, td{ padding:8px; }
+tbody tr{ border-bottom:1px solid rgba(255,255,255,.06); }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="login" class="card">
+    <h1>Secure CAM 2025</h1>
+    <p>Voer geldige toegangsgegevens in.</p>
+
+    <input id="user" placeholder="Gebruiker" autocomplete="off">
+    <input id="pass" type="password" placeholder="Pincode" inputmode="numeric">
+
+    <br>
+    <button onclick="doLogin()">Login</button>
+    <p id="err" class="hidden" style="color:#ff8a8a;">Toegang geweigerd.</p>
+
+    <div class="footer">Security Console v1.4</div>
+  </div>
+
+  <!-- HOOFDSCHERM -->
+  <div id="home" class="card hidden">
+    <h2>Cameraselectie</h2>
+    <p>Selecteer een camera of bekijk de logs.</p>
+
+    <div class="cam-grid">
+      <div class="cam-btn" onclick="openCam(1)">
+        <div class="cam-icon">📷</div>
+        <div class="cam-name">Exterior</div>
+      </div>
+
+      <div class="cam-btn" onclick="openCam(2)">
+        <div class="cam-icon">📷</div>
+        <div class="cam-name">Int - Hallway</div>
+      </div>
+
+      <div class="cam-btn" onclick="openCam(3)">
+        <div class="cam-icon">📷</div>
+        <div class="cam-name">Int - Desk</div>
+      </div>
+
+      <div class="cam-btn" onclick="openLogs()">
+        <div class="cam-icon">🗒️</div>
+        <div class="cam-name">Logs</div>
+      </div>
+    </div>
+
+    <div class="footer">Audit logging actief • Laatste sync: 19:41</div>
+  </div>
+
+  <!-- CAMERA VIEW -->
+  <div id="camera" class="card hidden">
+    <h2 id="camTitle">Camera</h2>
+    <p>Beschikbare snapshots</p>
+
+    <div class="imgs" id="imgs"></div>
+
+    <button onclick="backHome()">← Terug naar overzicht</button>
+  </div>
+
+  <!-- LOGS VIEW -->
+  <div id="logs" class="card hidden">
+    <h2>Security Logs</h2>
+    <p>Systeemactiviteiten (laatste 24u)</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Tijd</th>
+          <th>Event</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- OPVULSEL (niet relevant) -->
+        <tr><td>18:12</td><td>System boot completed</td></tr>
+        <tr><td>18:45</td><td>Camera CAM 1 status OK</td></tr>
+        <tr><td>19:03</td><td>Camera CAM 2 status OK</td></tr>
+        <tr><td>19:04</td><td>Camera CAM 3 status OK</td></tr>
+        <tr><td>19:41</td><td>Automatic archive completed</td></tr>
+        <tr><td>19:58</td><td>No motion detected (all zones)</td></tr>
+
+        <!-- RELEVANT -->
+        <tr style="color:#ffd27d;">
+          <td>23:38</td>
+          <td>Admin override detected (admin)</td>
+        </tr>
+        <tr style="color:#ff9a9a;">
+          <td>23:40</td>
+          <td>Camera 3 footage "Int - Desk" deleted (manual override)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <br>
+    <button onclick="backHome()">← Terug naar overzicht</button>
+  </div>
+
+</div>
+
+<script>
+/* ===== INSTELLINGEN ===== */
+const VALID_USER = "FransP";
+const VALID_PIN  = "1121";
+
+const CAMS = {
+  1: {
+    title: "CAM 1 | Exterior",
+    images: ["img/cam1_1.png", "img/cam1_2.png"]
+  },
+  2: {
+    title: "CAM 2 | Int - Hallway",
+    images: ["img/cam2_1.png", "img/cam2_2.png"]
+  },
+  3: {
+    title: "CAM 3 | Int - Desk",
+    images: ["img/cam3_1.png", "img/cam3_2.png"]
+  }
+};
+
+/* ===== ELEMENTEN ===== */
+const loginDiv = document.getElementById("login");
+const homeDiv  = document.getElementById("home");
+const camDiv   = document.getElementById("camera");
+const logsDiv  = document.getElementById("logs");
+
+const err      = document.getElementById("err");
+const imgs     = document.getElementById("imgs");
+const camTitle = document.getElementById("camTitle");
+
+/* ===== LOGICA ===== */
+function doLogin(){
+  const u = document.getElementById("user").value.trim();
+  const p = document.getElementById("pass").value.trim();
+
+  if(u === VALID_USER && p === VALID_PIN){
+    err.classList.add("hidden");
+    loginDiv.classList.add("hidden");
+    homeDiv.classList.remove("hidden");
+  } else {
+    err.classList.remove("hidden");
+  }
+}
+
+function openCam(nr){
+  const cam = CAMS[nr];
+
+  homeDiv.classList.add("hidden");
+  logsDiv.classList.add("hidden");
+  camDiv.classList.remove("hidden");
+
+  camTitle.textContent = cam.title;
+  imgs.innerHTML = cam.images.map(
+    src => `<img src="${src}" alt="${cam.title}">`
+  ).join("");
+}
+
+function openLogs(){
+  homeDiv.classList.add("hidden");
+  camDiv.classList.add("hidden");
+  logsDiv.classList.remove("hidden");
+}
+
+function backHome(){
+  camDiv.classList.add("hidden");
+  logsDiv.classList.add("hidden");
+  homeDiv.classList.remove("hidden");
+  imgs.innerHTML = "";
+}
+</script>
+
+</body>
+</html>

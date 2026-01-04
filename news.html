@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Maasbracht Nieuws • Dossiers</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#202124;
+      --muted:#5f6368;
+      --line:#e0e3e7;
+      --accent:#1a73e8;
+      --shadow: 0 10px 26px rgba(0,0,0,.08);
+      --radius: 14px;
+      --max: 1100px;
+      --sidebar: 260px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    /* Topbar */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      background: rgba(246,248,252,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      min-width:0;
+    }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      display:grid;place-items:center;
+      background:var(--card);
+      border:1px solid var(--line);
+      box-shadow: 0 6px 14px rgba(0,0,0,.06);
+      font-weight:800;
+      color:var(--accent);
+      letter-spacing:.3px;
+      user-select:none;
+    }
+    .brand h1{
+      margin:0;
+      font-size:15px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand small{
+      display:block;
+      color:var(--muted);
+      font-weight:600;
+      font-size:12px;
+      margin-top:1px;
+    }
+    .meta{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:600;
+      white-space:nowrap;
+    }
+
+    /* Layout */
+    .wrap{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:18px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      gap:16px;
+      align-items:start;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      position:sticky;
+      top:70px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .side-head{
+      padding:14px 14px 10px 14px;
+      border-bottom:1px solid var(--line);
+    }
+    .side-head .kicker{
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.6px;
+      color:var(--muted);
+      text-transform:uppercase;
+    }
+    .side-head .title{
+      margin:6px 0 0 0;
+      font-size:14px;
+      font-weight:800;
+    }
+    .nav{
+      display:flex;
+      flex-direction:column;
+      padding:8px;
+      gap:6px;
+    }
+    .nav a{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      text-decoration:none;
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      transition: .15s ease;
+    }
+    .nav a:hover{
+      background:#f3f6ff;
+      border-color:#dbe5ff;
+    }
+    .nav a.active{
+      background:#e9f1ff;
+      border-color:#cfe0ff;
+    }
+    .pill{
+      flex:0 0 auto;
+      width:22px;height:22px;
+      border-radius:8px;
+      display:grid;place-items:center;
+      background:#eef2f7;
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-weight:800;
+      font-size:12px;
+      margin-top:1px;
+    }
+    .nav .txt{
+      min-width:0;
+    }
+    .nav .txt strong{
+      display:block;
+      font-size:13px;
+      font-weight:800;
+      line-height:1.2;
+    }
+    .nav .txt span{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    /* Article cards */
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    article{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hero{
+      width:100%;
+      aspect-ratio: 16 / 7;
+      background:#eef2f7;
+      border-bottom:1px solid var(--line);
+      display:block;
+      object-fit:cover;
+    }
+    .a-body{
+      padding:16px 16px 18px 16px;
+    }
+    .badge-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.35px;
+      color:var(--muted);
+      text-transform:uppercase;
+      padding:6px 9px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fafbff;
+    }
+    .badge.breaking{
+      color:#b3261e;
+      background:#fff1f0;
+      border-color:#ffd2cf;
+    }
+    h2{
+      margin:0 0 8px 0;
+      font-size:22px;
+      line-height:1.2;
+      font-weight:900;
+      letter-spacing:-.2px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:650;
+      margin-bottom:12px;
+    }
+    .a-body p{margin:0 0 12px 0}
+    .a-body p:last-child{margin-bottom:0}
+    .rule{
+      height:1px;
+      background:var(--line);
+      margin:14px 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 920px){
+      .grid{grid-template-columns: 1fr}
+      .sidebar{position:relative; top:auto}
+      :root{ --sidebar: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo">MN</div>
+        <div style="min-width:0">
+          <h1>Maasbracht Nieuws</h1>
+          <small>Archief • Carnaval & Gemeenschap</small>
+        </div>
+      </div>
+      <div class="meta" id="metaDate">Laatste update: —</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="side-head">
+          <div class="kicker">Dossiers</div>
+          <div class="title">Recente artikels</div>
+        </div>
+
+        <nav class="nav" aria-label="Artikelnavigatie">
+          <a href="#artikel-1" data-target="artikel-1" class="active">
+            <div class="pill">1</div>
+            <div class="txt">
+              <strong>Historische breuk: Denny van Kessel Prins Carnaval</strong>
+              <span>achtergrond • juni</span>
+            </div>
+          </a>
+
+          <a href="#artikel-2" data-target="artikel-2">
+            <div class="pill">2</div>
+            <div class="txt">
+              <strong>Nachtelijk ongeval met Lamborghini zet Pijpers onder druk</strong>
+              <span>incident • september</span>
+            </div>
+          </a>
+
+          <a href="#artikel-3" data-target="artikel-3">
+            <div class="pill">3</div>
+            <div class="txt">
+              <strong>Gerrit Duvelmans uitgeroepen tot Barman van het Jaar</strong>
+              <span>lokale trots • november</span>
+            </div>
+          </a>
+
+          <a href="#artikel-4" data-target="artikel-4">
+            <div class="pill">4</div>
+            <div class="txt">
+              <strong>BREAKING: Prins Carnaval dood aangetroffen tijdens nieuwjaarsfeest</strong>
+              <span>breaking • nieuwjaarsnacht</span>
+            </div>
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Content -->
+      <section class="content">
+        <!-- Artikel 1 -->
+        <article id="artikel-1">
+          <img class="hero" src="img/artikel1.png" alt="Carnavalsverkiezing (archiefbeeld)" />
+          <div class="a-body">
+            <div class="badge-row">
+              <span class="badge">Archief</span>
+              <span class="badge">Juni</span>
+              <span class="badge">Carnaval</span>
+            </div>
+            <h2>Historische breuk in carnavalsverkiezing: Denny van Kessel uitgeroepen tot Prins Carnaval</h2>
+            <div class="sub">Maasbracht — juni (eerder dit jaar)</div>
+
+            <p>Voor het eerst in jaren is de titel van Prins Carnaval niet naar een lid van de families Pijpers of Savelkoul gegaan. Tijdens de jaarlijkse carnavalsverkiezing werd Denny van Kessel aangesteld als nieuwe prins, een keuze die door velen als opvallend werd omschreven.</p>
+
+            <div class="rule"></div>
+
+            <p><strong>Jarenlange vaste waarden.</strong> De carnavalsgeschiedenis van Maasbracht wordt traditioneel gekenmerkt door twee families. De familie Pijpers leverde doorheen de jaren meerdere prinsen, vaak ondersteund door hun sterke financiële betrokkenheid bij verenigingen en evenementen. Sponsoring en organisatiekracht speelden daarbij een zichtbare rol.</p>
+
+            <p><strong>Traditie.</strong> De familie Savelkoul staat bekend om haar diepgewortelde carnavals­traditie. Generaties lang waren zij actief binnen de carnavalsraad en aanverwante verenigingen, waarbij het prinsenschap eerder als een eer dan als een machtspositie werd beschouwd.</p>
+
+            <p><strong>Een onverwachte keuze.</strong> De aanstelling van Van Kessel werd door het carnavalscomité gemotiveerd als een bewuste keuze voor vernieuwing en verbreding. In de wandelgangen werd gesproken over verrassing bij enkele gevestigde namen, al benadrukten betrokkenen publiekelijk dat de verkiezing correct verlopen was.</p>
+          </div>
+        </article>
+
+        <!-- Artikel 2 -->
+        <article id="artikel-2">
+          <img class="hero" src="img/artikel2.png" alt="Schade na verkeersongeval (archiefbeeld)" />
+          <div class="a-body">
+            <div class="badge-row">
+              <span class="badge">Archief</span>
+              <span class="badge">September</span>
+              <span class="badge">Maastricht</span>
+            </div>
+            <h2>Nachtelijk ongeval met sportwagen zet familie Pijpers onder druk</h2>
+            <div class="sub">Maastricht — september (eerder dit jaar)</div>
+
+            <p>De zoon van zakenman Roy Pijpers is in de nacht van zaterdag op zondag betrokken geraakt bij een verkeersongeval in Maastricht. De luxesportwagen waarin hij reed, raakte zwaar beschadigd nadat het voertuig van de weg afweek en tot stilstand kwam tegen een verkeersconstructie.</p>
+
+            <div class="rule"></div>
+
+            <p><strong>Geen levensgevaar, wel vragen.</strong> Volgens de politie raakte niemand levensgevaarlijk gewond. Over de precieze oorzaak van het ongeval werd op dat moment geen officiële mededeling gedaan.</p>
+
+            <p><strong>Reputatieschade.</strong> Hoewel het ongeval in privésfeer plaatsvond, zorgde het incident vrijwel onmiddellijk voor beroering. Verschillende inwoners spraken van “geen goede reclame” voor een familie die zich traditioneel profileert als stabiele pijler binnen de gemeenschap.</p>
+
+            <p>PijpersCorp liet in een korte schriftelijke reactie weten het incident te betreuren, maar benadrukte dat het om een persoonlijke aangelegenheid ging die losstaat van de bedrijfsactiviteiten.</p>
+          </div>
+        </article>
+
+        <!-- Artikel 3 -->
+        <article id="artikel-3">
+          <img class="hero" src="img/artikel3.png" alt="Barman achter toog (archiefbeeld)" />
+          <div class="a-body">
+            <div class="badge-row">
+              <span class="badge">Archief</span>
+              <span class="badge">November</span>
+              <span class="badge">Gemeenschap</span>
+            </div>
+
+            <h2>Gerrit Duvelmans uitgeroepen tot Barman van het Jaar</h2>
+            <div class="sub">Maasbracht — november (eerder dit jaar)</div>
+
+            <p><strong>● Lokale erkenning.</strong> Gerrit Duvelmans, al meer dan twintig jaar vaste waarde achter de toog van het pand aan de Markt, is uitgeroepen tot <em>Barman van het Jaar</em>. De onderscheiding werd toegekend door een regionale vakjury.</p>
+
+            <div class="rule"></div>
+
+            <p><strong>✦ Vertrouwd gezicht.</strong> Duvelmans staat bekend als een discrete maar aanwezige figuur tijdens lokale evenementen. Volgens vaste klanten “ziet hij alles, maar zegt hij weinig”.</p>
+
+            <p><strong>● Bindende rol.</strong> Zowel leden van de carnavalsvereniging als bezoekers uit verschillende sociale kringen noemen hem een verbindende factor binnen het dorpsleven. “Iedereen kent Gerrit,” klinkt het.</p>
+
+            <p>✦ De uitreiking werd afgesloten met een bescheiden viering in besloten kring. Duvelmans zelf hield het bij een korte reactie: <em>“’t Is plezant, mer ich doa gewoen mien wirk.”</em></p>
+          </div>
+        </article>
+
+        <!-- Artikel 4 -->
+        <article id="artikel-4">
+          <img class="hero" src="img/artikel4.png" alt="Politie-afzetting bij nacht (archiefbeeld)" />
+          <div class="a-body">
+            <div class="badge-row">
+              <span class="badge breaking">★ Breaking</span>
+              <span class="badge">Nieuwjaarsnacht</span>
+              <span class="badge">Maasbracht</span>
+            </div>
+            <h2>BREAKING — Prins Carnaval dood aangetroffen tijdens nieuwjaarsfeest in Maasbracht</h2>
+            <div class="sub">Maasbracht — nieuwjaarsnacht</div>
+
+            <p>Tijdens het nieuwjaarsfeest van de lokale carnavalvereniging is Denny van Kessel, de regerende Prins Carnaval van Maasbracht, levenloos aangetroffen in een afgesloten ruimte binnen het pand waar de viering plaatsvond.</p>
+
+            <div class="rule"></div>
+
+            <p><strong>Vastgesteld in de vroege uurtjes.</strong> Het incident werd vastgesteld kort na 3u ’s nachts, terwijl het feest nog aan de gang was. Hulpdiensten en politie kwamen massaal ter plaatse. Het gebouw werd tijdelijk afgesloten en aanwezigen werd gevraagd binnen te blijven in afwachting van verdere instructies.</p>
+
+            <p>Volgens de politie gaat het niet om een natuurlijk overlijden. Er werd onmiddellijk een gerechtelijk onderzoek opgestart. Over de doodsoorzaak en de exacte omstandigheden worden voorlopig geen verdere details vrijgegeven.</p>
+
+            <p><strong>Gespecialiseerde bijstand.</strong> Het onderzoek wordt gevoerd in samenwerking met de Groep Karnamor van de Belgische politie, een gespecialiseerde eenheid met ervaring in incidenten binnen de context van carnavalsactiviteiten en -verenigingen.</p>
+
+            <p>De autoriteiten vragen iedereen die relevante informatie heeft zich te melden. Dit is een lopend verhaal. Verdere updates volgen.</p>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // Meta datum (lokaal, zonder afhankelijkheden)
+    (function(){
+      const el = document.getElementById("metaDate");
+      const now = new Date();
+      const opts = { year:"numeric", month:"long", day:"2-digit", hour:"2-digit", minute:"2-digit" };
+      el.textContent = "Laatste update: " + now.toLocaleString("nl-BE", opts);
+    })();
+
+    // Active nav item op basis van scrollpositie
+    (function(){
+      const links = Array.from(document.querySelectorAll(".nav a[data-target]"));
+      const sections = links
+        .map(a => document.getElementById(a.dataset.target))
+        .filter(Boolean);
+
+      const setActive = (id) => {
+        links.forEach(a => a.classList.toggle("active", a.dataset.target === id));
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries
+          .filter(e => e.isIntersecting)
+          .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible && visible.target && visible.target.id) setActive(visible.target.id);
+      }, { root: null, threshold: [0.25, 0.45, 0.6] });
+
+      sections.forEach(s => observer.observe(s));
+
+      // Smooth scroll
+      links.forEach(a => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const id = a.dataset.target;
+          const target = document.getElementById(id);
+          if (!target) return;
+          target.scrollIntoView({ behavior:"smooth", block:"start" });
+          history.replaceState(null, "", "#" + id);
+          setActive(id);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

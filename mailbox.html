@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mail</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#202124;
+      --muted:#5f6368;
+      --line:#e0e3e7;
+      --accent:#1a73e8;
+      --danger:#d93025;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:24px}
+    .topbar{
+      display:flex;align-items:center;gap:12px;
+      padding:14px 18px;border-radius:14px;
+      background:rgba(255,255,255,.7);
+      border:1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background:linear-gradient(145deg,#e8f0fe,#ffffff);
+      border:1px solid var(--line);
+      display:grid;place-items:center;
+      font-weight:700;color:var(--accent);
+    }
+    .title{font-weight:650}
+    .spacer{flex:1}
+    .pill{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--line);
+      padding:6px 10px;border-radius:999px;
+      background:#fff;
+    }
+
+    .card{
+      margin-top:18px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 1px 0 rgba(60,64,67,.08);
+    }
+    .cardHeader{
+      padding:16px 18px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .cardHeader h2{
+      margin:0;font-size:16px;font-weight:650;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:#fff;
+      padding:8px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      color:var(--text);
+    }
+    .btn.primary{
+      background:var(--accent);
+      border-color:var(--accent);
+      color:#fff;
+    }
+    .btn:active{transform:translateY(1px)}
+    .error{color:var(--danger);font-size:13px;margin-top:10px;display:none}
+
+    .loginGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+      padding:18px;
+    }
+    @media(max-width:720px){ .loginGrid{grid-template-columns:1fr} }
+
+    label{display:block;font-size:12px;color:var(--muted);margin:2px 0 6px}
+    input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      outline:none;
+      font-size:14px;
+      background:#fff;
+    }
+
+    .list{width:100%;border-collapse:collapse}
+    .list thead th{
+      text-align:left;font-size:12px;color:var(--muted);
+      padding:10px 18px;border-bottom:1px solid var(--line);
+      background:#fafbff;
+    }
+    .list tbody td{
+      padding:12px 18px;border-bottom:1px solid var(--line);
+      font-size:14px;
+    }
+    .row{cursor:pointer}
+    .row:hover{background:#f7faff}
+    .from{font-weight:600}
+    .date{color:var(--muted)}
+
+    .mailView{padding:18px}
+    .mailBody{
+      margin-top:16px;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      white-space:pre-wrap;
+      line-height:1.45;
+    }
+
+    .hidden{display:none!important}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="logo">PC</div>
+    <div>
+      <div class="title">Pijpers Corp</div>
+      <div class="pill">Interne webmail</div>
+    </div>
+    <div class="spacer"></div>
+    <div id="userPill" class="pill hidden"></div>
+  </div>
+
+  <!-- LOGIN -->
+  <section id="loginCard" class="card">
+    <div class="cardHeader">
+      <h2>Aanmelden</h2>
+      <div class="pill">Email + 4-cijferige pincode</div>
+    </div>
+    <div class="loginGrid">
+      <div>
+        <label>E-mailadres</label>
+        <input id="email" autocomplete="off">
+      </div>
+      <div>
+        <label>Pincode</label>
+        <input id="pin" maxlength="4" autocomplete="off">
+      </div>
+      <div style="grid-column:1/-1;text-align:right">
+        <button id="loginBtn" class="btn primary">Inloggen</button>
+      </div>
+      <div id="loginError" class="error" style="grid-column:1/-1;">
+        Ongeldige gegevens.
+      </div>
+    </div>
+  </section>
+
+  <!-- INBOX -->
+  <section id="inboxCard" class="card hidden">
+    <div class="cardHeader">
+      <h2>Inbox</h2>
+      <button id="logoutBtn" class="btn">Uitloggen</button>
+    </div>
+    <table class="list">
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Afzender</th>
+          <th>Onderwerp</th>
+        </tr>
+      </thead>
+      <tbody id="mailList"></tbody>
+    </table>
+  </section>
+
+  <!-- MAIL VIEW -->
+  <section id="mailCard" class="card hidden">
+    <div class="cardHeader">
+      <div>
+        <h2 id="mailSubject"></h2>
+        <div class="pill"><span id="mailFrom"></span> · <span id="mailDate"></span></div>
+      </div>
+      <div>
+        <button id="backBtn" class="btn">Terug</button>
+        <button id="logoutBtn2" class="btn">Uitloggen</button>
+      </div>
+    </div>
+    <div class="mailView">
+      <div id="mailBody" class="mailBody"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const VALID_EMAIL = "Frans@pijpersCorp.com";
+const VALID_PIN   = "1962";
+
+const MAILS = [
+  {
+    id:"m1",
+    date:"27/12/2025 22:13",
+    from:"DennyKessels@outlook.com",
+    subject:"wel wel wel oude pijper...",
+    body:
+`Via via kreeg ik onderstaande foto door.
+
+Ik denk dat het beter is dat je zoon dit jaar geen prins wordt.
+Sommige zaken blijven beter binnenskamers.
+
+[foto]
+
+Denny`,
+    photo:"img/foto.png",
+    photoLabel:"foto.png"
+  },
+  {
+    id:"m2",
+    date:"12/12/2025 14:07",
+    from:"no-reply@securecam.com",
+    subject:"Update: Licentie Secure CAM 2025",
+    body:
+`Beste Frans,
+
+Hierbij de gegevens voor Secure CAM 2025.
+
+Username: FransP
+Password: De 4de in rij voor Conway
+
+Zonder deze gegevens raak je nergens binnen.
+
+Secure CAM`
+  },
+  {
+    id:"m3",
+    date:"28/12/2025 00:02",
+    from:"booking@sanneprive.nl",
+    subject:"Bevestiging afspraak Sanne Privé",
+    body:
+`Beste heer Pijpers,
+
+Hierbij bevestigen wij uw afspraak:
+
+Datum: 31/12/2025
+Tijd: 23u00
+Formule: VIP-arrangement (2u)
+
+Gelieve 30 minuten op voorhand aanwezig te zijn.
+
+Sanne Privé`
+  },
+  {
+    id:"m4",
+    date:"31/12/2025 23:04",
+    from:"Roy@Pijperscorp.com",
+    subject:"RE: Einde carrière",
+    body:
+`Pap,
+
+Ik weet dat je beslissing vaststaat, maar ik wil je toch vragen om mij in 2026 nog één kans te geven.
+
+Ik besef nu pas hoe licht ik de voorbije jaren alles heb opgenomen — het bedrijf, de prinsenverkiezing, de familie. Wat je gisteren gezegd hebt, is hard aangekomen. Misschien was het nodig, want ik ben hier echt niet goed van.
+
+Mam maakt zich zorgen. Ze is kwaad, maar vooral teleurgesteld, en dit keer kan ze er niet meer mee lachen.
+Zie alsjeblieft dat je op tijd terug bent van je pleziertripje, want ik vrees dat dit anders helemaal ontspoort.
+
+Ik meen het, pap. Als je me nog één kans geeft, zal ik tonen dat je op mij kan rekenen.
+
+Roy
+
+
+--------------------------------------------------
+
+From: Frans@PijpersCorp.com
+Sent: 30/12/2025
+Subject: Einde carrière
+
+Dag Roy,
+
+Bij deze deel ik je mee dat wij bij Pijpers Corp jouw houding en gedrag beu zijn.
+
+We hebben jarenlang in jou geïnvesteerd, terwijl anderen zich zouden doodwerken voor die kansen. Jij hebt tot vandaag niets bewezen.
+Ook het dossier rond de prinsenverkiezing heb je volledig laten liggen.
+
+Op de eerste werkdag van het nieuwe jaar verwacht ik dat je je bureau leegmaakt.
+
+Frans`
+  }
+];
+
+const $ = (id)=>document.getElementById(id);
+
+function show(el){el.classList.remove("hidden")}
+function hide(el){el.classList.add("hidden")}
+
+const mailList=$("mailList"), loginCard=$("loginCard"), inboxCard=$("inboxCard"), mailCard=$("mailCard");
+
+function renderInbox(){
+  mailList.innerHTML="";
+  MAILS.forEach(m=>{
+    const tr=document.createElement("tr");
+    tr.className="row";
+    tr.innerHTML=`<td class="date">${m.date}</td><td class="from">${m.from}</td><td>${m.subject}</td>`;
+    tr.onclick=()=>openMail(m.id);
+    mailList.appendChild(tr);
+  });
+}
+
+function openMail(id){
+  const m=MAILS.find(x=>x.id===id);
+  $("mailSubject").textContent=m.subject;
+  $("mailFrom").textContent=m.from;
+  $("mailDate").textContent=m.date;
+  let body=m.body.replace("[foto]", m.photo ? `<img src="${m.photo}" style="margin-top:12px;max-width:100%">` : "");
+  $("mailBody").innerHTML=body;
+  hide(inboxCard); show(mailCard);
+}
+
+function attemptLogin(){
+  if($("email").value.toLowerCase()===VALID_EMAIL.toLowerCase() && $("pin").value===VALID_PIN){
+    hide(loginCard); show(inboxCard); renderInbox();
+  } else {
+    $("loginError").style.display="block";
+  }
+}
+
+$("loginBtn").onclick=attemptLogin;
+$("backBtn").onclick=()=>{ hide(mailCard); show(inboxCard); };
+$("logoutBtn").onclick=()=>location.reload();
+$("logoutBtn2").onclick=()=>location.reload();
+</script>
+
+</body>
+</html>
