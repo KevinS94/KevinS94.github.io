@@ -120,22 +120,25 @@
     </div>
   </div>
 
-  <script>
-    // === IP -> TARGET mappings (uit je .bat) ===
+    <script>
+    // === IP -> TARGET mappings ===
     const MAP = new Map([
-      ["347.58.5476.9356", "securecam.html"],
+      ["347.58.5476.9356", "index.html"],
       ["72.1004.458.1084", "mailbox.html"],
       ["10.10.10.10", "news.html"],
       ["347.17.458.9356", "https://chatgpt.com/g/g-692207c52cf48191b2ff61d54edd8521-murdermystery-barman"],
       ["5750.1004.73.42", "https://chatgpt.com/g/g-695435c297b88191b4936f581a90c2e6-murdermystery-joanna"],
       ["72.58.73.42", "https://www.youtube.com/watch?v=xvFZjo5PgG0"],
     ]);
-
+  
+    const STORAGE_KEY = "mm_unlocked_ips_v1";
+  
     const out = document.getElementById("out");
     const ipInput = document.getElementById("ip");
     const btnGo = document.getElementById("go");
     const btnClear = document.getElementById("clear");
-
+    const links = document.getElementById("links");
+  
     function log(line, cls){
       const span = document.createElement("span");
       if (cls) span.className = cls;
@@ -143,60 +146,78 @@
       out.appendChild(span);
       out.scrollTop = out.scrollHeight;
     }
-
-    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-    async function spam(text, baseDelayMs, lines){
-      for(let i=0;i<lines;i++){
-        const j = Math.floor(Math.random()*9999).toString().padStart(4,"0");
-        const k = Math.floor(Math.random()*9999).toString().padStart(4,"0");
-        const t = new Date().toLocaleTimeString();
-        log(`[${t}] ${text} | id=${j}-${k}`);
-        const d = baseDelayMs + Math.floor(Math.random()*65);
-        await sleep(d);
+  
+    function getUnlockedIPs(){
+      try{
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      }catch{
+        return [];
       }
     }
-
-    function normalizeTarget(target){
-      // Zorg dat lokale html links werken in GitHub Pages (zelfde folder)
-      // target = "index.html" etc. -> ok
-      return target;
+  
+    function unlockIP(ip){
+      const unlocked = new Set(getUnlockedIPs());
+      unlocked.add(ip);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...unlocked]));
+      updateQuickLinks();
     }
-
+  
+    function updateQuickLinks(){
+      const unlocked = new Set(getUnlockedIPs());
+      let anyVisible = false;
+  
+      document.querySelectorAll("[data-ip]").forEach(a=>{
+        const ip = a.getAttribute("data-ip");
+        if (unlocked.has(ip)){
+          a.style.display = "inline-block";
+          anyVisible = true;
+        } else {
+          a.style.display = "none";
+        }
+      });
+  
+      links.style.display = anyVisible ? "flex" : "none";
+    }
+  
+    function openInNewTab(url){
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w){
+        log("[WARN] Popup blocked. Click link:", "warn");
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = url;
+        out.appendChild(a);
+        out.appendChild(document.createTextNode("\n"));
+      }
+    }
+  
     async function connect(ip){
       out.textContent = "";
       const target = MAP.get(ip);
-
-      log(`Connecting to ${ip} ...`, "muted");
-      await sleep(250);
-
+  
       if(!target){
         log("[ERROR] Unknown IP. Access denied.", "err");
-        log("Tip: gebruik een van de quick links onderaan.", "warn");
         return;
       }
-
-      await spam("Initializing Secure CAM 2025 core...", 65, 8);
-      await spam("Mounting evidence storage...", 55, 6);
-      await spam("Syncing timestamps...", 50, 6);
-      await spam("Bypassing cache...", 45, 5);
-      await spam("Starting console renderer...", 45, 5);
-
-      log("[DONE] Launching interface...", "muted");
-      await sleep(350);
-
-      // Redirect in dezelfde tab (betrouwbaar online)
-      window.location.href = normalizeTarget(target);
+  
+      log("Correct IP, opening page.", "muted");
+  
+      // ✅ unlock enkel deze IP
+      unlockIP(ip);
+  
+      await new Promise(r => setTimeout(r, 200));
+      openInNewTab(target);
     }
-
+  
     btnGo.addEventListener("click", () => connect(ipInput.value.trim()));
     btnClear.addEventListener("click", () => (out.textContent="", ipInput.focus()));
-
+  
     ipInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") connect(ipInput.value.trim());
     });
-
-    // quick links
+  
     document.querySelectorAll("[data-ip]").forEach(a=>{
       a.addEventListener("click",(e)=>{
         e.preventDefault();
@@ -205,9 +226,12 @@
         connect(ip);
       });
     });
-
-    // focus
+  
+    // Bij laden: toon enkel reeds ontgrendelde snelkoppelingen
+    updateQuickLinks();
     ipInput.focus();
   </script>
+
 </body>
 </html>
+
