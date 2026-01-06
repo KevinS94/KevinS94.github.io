@@ -1,6 +1,6 @@
 (function () {
   const btn = document.createElement("a");
-  btn.href = "browser.html"; // pas aan indien nodig
+  btn.href = "index.html"; // pas aan indien nodig
   btn.textContent = "↩ Terminal";
 
   Object.assign(btn.style, {
