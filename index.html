@@ -72,14 +72,24 @@
     .muted{color:rgba(52,255,122,.65)}
     .warn{color:var(--warn)}
     .err{color:var(--err)}
-    .links{
+
+    /* onderaan: reset links + snelkoppelingen rechts */
+    .bottom{
       margin-top:12px;
       display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .links{
+      display:none; /* pas tonen als er minstens 1 unlocked is */
       flex-wrap:wrap;
       gap:8px;
+      justify-content:flex-end;
     }
     .chip{
-      display:inline-block;
+      display:none; /* per IP unlocked */
       border:1px solid rgba(31,184,90,.6);
       padding:6px 10px;
       border-radius:999px;
@@ -98,7 +108,7 @@
 
     <p class="hint">
       Enter IP-adres en druk <span class="kbd">Enter</span> of klik “Connect”.
-      <span class="muted">(Online: we redirecten in dezelfde tab — popups worden anders vaak geblokkeerd.)</span>
+      <span class="muted">(Opent in dezelfde tab.)</span>
     </p>
 
     <div class="row">
@@ -109,18 +119,23 @@
 
     <div id="out" class="out"></div>
 
-    <!-- Optioneel: snelkoppelingen (handig als spelers de IP’s vergeten) -->
-    <div class="links">
-      <a class="chip" href="#" data-ip="347.58.5476.9356">Main (IP1)</a>
-      <a class="chip" href="#" data-ip="72.1004.458.1084">Mailbox (IP2)</a>
-      <a class="chip" href="#" data-ip="10.10.10.10">News (IP3)</a>
-      <a class="chip" href="#" data-ip="347.17.458.9356">Barman GPT (IP4)</a>
-      <a class="chip" href="#" data-ip="5750.1004.73.42">Joanna GPT (IP5)</a>
-      <a class="chip" href="#" data-ip="72.58.73.42">YouTube (IP6)</a>
+    <!-- onderaan: reset links, snelkoppelingen rechts -->
+    <div class="bottom">
+      <button id="reset">New game</button>
+
+      <!-- ✅ BELANGRIJK: id="links" zodat JS het vindt -->
+      <div id="links" class="links">
+        <a class="chip" href="#" data-ip="347.58.5476.9356">Main (IP1)</a>
+        <a class="chip" href="#" data-ip="72.1004.458.1084">Mailbox (IP2)</a>
+        <a class="chip" href="#" data-ip="10.10.10.10">News (IP3)</a>
+        <a class="chip" href="#" data-ip="347.17.458.9356">Barman GPT (IP4)</a>
+        <a class="chip" href="#" data-ip="5750.1004.73.42">Joanna GPT (IP5)</a>
+        <a class="chip" href="#" data-ip="72.58.73.42">YouTube (IP6)</a>
+      </div>
     </div>
   </div>
 
-    <script>
+  <script>
     const MAP = new Map([
       ["347.58.5476.9356", "index.html"],
       ["72.1004.458.1084", "mailbox.html"],
@@ -129,15 +144,16 @@
       ["5750.1004.73.42", "https://chatgpt.com/g/g-695435c297b88191b4936f581a90c2e6-murdermystery-joanna"],
       ["72.58.73.42", "https://www.youtube.com/watch?v=xvFZjo5PgG0"],
     ]);
-  
+
     const STORAGE_KEY = "mm_unlocked_ips_v1";
-  
+
     const out = document.getElementById("out");
     const ipInput = document.getElementById("ip");
     const btnGo = document.getElementById("go");
     const btnClear = document.getElementById("clear");
+    const btnReset = document.getElementById("reset");
     const links = document.getElementById("links");
-  
+
     function log(line, cls){
       const span = document.createElement("span");
       if (cls) span.className = cls;
@@ -145,82 +161,59 @@
       out.appendChild(span);
       out.scrollTop = out.scrollHeight;
     }
-  
+
     function getUnlockedIPs(){
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
       catch { return []; }
     }
-  
+
     function unlockIP(ip){
       const unlocked = new Set(getUnlockedIPs());
       unlocked.add(ip);
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...unlocked]));
       updateQuickLinks();
     }
-  
+
     function updateQuickLinks(){
+      if (!links) return; // safety
+
       const unlocked = new Set(getUnlockedIPs());
       let anyVisible = false;
-  
+
       document.querySelectorAll("[data-ip]").forEach(a=>{
         const ip = a.getAttribute("data-ip");
         const visible = unlocked.has(ip);
         a.style.display = visible ? "inline-block" : "none";
         if (visible) anyVisible = true;
       });
-  
+
       links.style.display = anyVisible ? "flex" : "none";
     }
-  
-    // ✅ Open tab onmiddellijk (binnen user-gesture), pas daarna url instellen
-    function openInNewTabImmediate(url){
-      const w = window.open("about:blank", "_blank", "noopener,noreferrer");
-  
-      if (!w){
-        log("[WARN] Popup blocked. Klik de link hieronder:", "warn");
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.textContent = url;
-        a.style.color = "inherit";
-        out.appendChild(a);
-        out.appendChild(document.createTextNode("\n"));
-        return;
-      }
-  
-      // Optioneel mini-delay voor "feel" zonder popup-block
-      // (tab is al geopend, dus dit is veilig)
-      setTimeout(() => { w.location.href = url; }, 50);
-    }
-  
+
     function connect(ip){
       out.textContent = "";
       const target = MAP.get(ip);
-  
+
       if(!target){
         log("[ERROR] Unknown IP. Access denied.", "err");
         return;
       }
-  
-      log("Correct IP, opening page.", "muted");
-  
-      // ✅ unlock enkel deze ip
-      unlockIP(ip);
-  
-      // ✅ open in nieuwe tab (betrouwbaar)
-      //openInNewTabImmediate(target);
-      window.location.href = target;
 
+      log("Correct IP, opening page.", "muted");
+
+      unlockIP(ip);
+
+      // ✅ dezelfde tab (stabiel)
+      window.location.assign(target);
     }
-  
+
     btnGo.addEventListener("click", () => connect(ipInput.value.trim()));
     btnClear.addEventListener("click", () => (out.textContent="", ipInput.focus()));
-  
+
     ipInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") connect(ipInput.value.trim());
     });
-  
+
     // quick links
     document.querySelectorAll("[data-ip]").forEach(a=>{
       a.addEventListener("click",(e)=>{
@@ -230,15 +223,21 @@
         connect(ip);
       });
     });
-  
+
+    // ✅ reset: wist unlocked IPs
+    btnReset.addEventListener("click", () => {
+      const ok = confirm("Nieuwe run starten? Dit wist alle ontgrendelde snelkoppelingen op dit toestel.");
+      if (!ok) return;
+
+      localStorage.removeItem(STORAGE_KEY);
+      out.textContent = "";
+      log("[DONE] Progress reset. Enter an IP to start.", "muted");
+      updateQuickLinks();
+      ipInput.focus();
+    });
+
     updateQuickLinks();
     ipInput.focus();
   </script>
-
-
 </body>
 </html>
-
-
-
-
