@@ -209,7 +209,9 @@
       unlockIP(ip);
   
       // ✅ open in nieuwe tab (betrouwbaar)
-      openInNewTabImmediate(target);
+      //openInNewTabImmediate(target);
+      window.location.href = target;
+
     }
   
     btnGo.addEventListener("click", () => connect(ipInput.value.trim()));
@@ -236,6 +238,7 @@
 
 </body>
 </html>
+
 
 
 
