@@ -73,7 +73,6 @@
     .warn{color:var(--warn)}
     .err{color:var(--err)}
 
-    /* onderaan: reset links + snelkoppelingen rechts */
     .bottom{
       margin-top:12px;
       display:flex;
@@ -83,13 +82,13 @@
       flex-wrap:wrap;
     }
     .links{
-      display:none; /* pas tonen als er minstens 1 unlocked is */
+      display:none;
       flex-wrap:wrap;
       gap:8px;
       justify-content:flex-end;
     }
     .chip{
-      display:none; /* per IP unlocked */
+      display:none;
       border:1px solid rgba(31,184,90,.6);
       padding:6px 10px;
       border-radius:999px;
@@ -107,7 +106,7 @@
 ================================================================</pre>
 
     <p class="hint">
-      Enter IP-adres en druk <span class="kbd">Enter</span> of klik “Connect”.
+      Enter IP-adres of "help" en druk <span class="kbd">Enter</span> of klik “Connect”.
       <span class="muted">(Opent in dezelfde tab.)</span>
     </p>
 
@@ -119,18 +118,16 @@
 
     <div id="out" class="out"></div>
 
-    <!-- onderaan: reset links, snelkoppelingen rechts -->
     <div class="bottom">
       <button id="reset">New game</button>
 
-      <!-- ✅ BELANGRIJK: id="links" zodat JS het vindt -->
       <div id="links" class="links">
         <a class="chip" href="#" data-ip="347.58.5476.9356">Main (IP1)</a>
         <a class="chip" href="#" data-ip="72.1004.458.1084">Mailbox (IP2)</a>
         <a class="chip" href="#" data-ip="10.10.10.10">News (IP3)</a>
         <a class="chip" href="#" data-ip="347.17.458.9356">Barman GPT (IP4)</a>
         <a class="chip" href="#" data-ip="5750.17.458.42">Joanna GPT (IP5)</a>
-        <a class="chip" href="#" data-ip="72.58.73.42">YouTube (IP6)</a>
+        <a class="chip" href="#" data-ip="15.15.15.15">PM (IP6)</a>
       </div>
     </div>
   </div>
@@ -140,6 +137,8 @@
       ["347.58.5476.9356", "index.html"],
       ["72.1004.458.1084", "mailbox.html"],
       ["10.10.10.10", "news.html"],
+      ["15.15.15.15", "politie.html"],
+
       ["347.17.458.9356", "https://chatgpt.com/g/g-692207c52cf48191b2ff61d54edd8521-murdermystery-barman"],
       ["5750.17.458.42", "https://chatgpt.com/g/g-695435c297b88191b4936f581a90c2e6-murdermystery-joanna"],
       ["72.58.73.42", "https://www.youtube.com/watch?v=xvFZjo5PgG0"],
@@ -175,8 +174,6 @@
     }
 
     function updateQuickLinks(){
-      if (!links) return; // safety
-
       const unlocked = new Set(getUnlockedIPs());
       let anyVisible = false;
 
@@ -192,6 +189,34 @@
 
     function connect(ip){
       out.textContent = "";
+
+      if (ip.toLowerCase() === "help") {
+        log(
+`Maasbracht politie: 15.15.15.15
+Maasbracht nieuws: 10.10.10.10
+
+_________________________________
+
+● - - - : 347
+- ● - - : 58
+- - ● - : 5476
+- - - ● : 9356
+
+▲ - - - : 72
+- ▲ - - : 1004
+- - ▲ - : 458
+- - - ▲ : 1084
+
+★ - - - : 5750
+- ★ - - : 17
+- - ★ - : 73
+- - - ★ : 42
+`,
+          "muted"
+        );
+        return;
+      }
+
       const target = MAP.get(ip);
 
       if(!target){
@@ -202,8 +227,6 @@
       log("Correct IP, opening page.", "muted");
 
       unlockIP(ip);
-
-      // ✅ dezelfde tab (stabiel)
       window.location.assign(target);
     }
 
@@ -214,7 +237,6 @@
       if (e.key === "Enter") connect(ipInput.value.trim());
     });
 
-    // quick links
     document.querySelectorAll("[data-ip]").forEach(a=>{
       a.addEventListener("click",(e)=>{
         e.preventDefault();
@@ -224,7 +246,6 @@
       });
     });
 
-    // ✅ reset: wist unlocked IPs
     btnReset.addEventListener("click", () => {
       const ok = confirm("Nieuwe run starten? Dit wist alle ontgrendelde snelkoppelingen op dit toestel.");
       if (!ok) return;
@@ -241,4 +262,3 @@
   </script>
 </body>
 </html>
-
