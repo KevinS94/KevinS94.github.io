@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Politie Maasbracht — IntraWeb / Case Vault</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#101824;
+      --panel2:#0f141e;
+      --line:#1f2a3a;
+      --text:#d6e1f3;
+      --muted:#9bb0cc;
+      --accent:#5aa6ff;
+      --ok:#35d07f;
+      --warn:#ffcc66;
+      --bad:#ff6677;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(90,166,255,.08), transparent 55%),
+        radial-gradient(900px 500px at 100% 10%, rgba(53,208,127,.06), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      letter-spacing:.1px;
+    }
+
+    /* Top bar */
+    .top{
+      position:sticky; top:0;
+      z-index:20;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.75);
+      border-bottom:1px solid rgba(31,42,58,.65);
+    }
+    .top-inner{
+      max-width:1280px;
+      margin:0 auto;
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      min-width: 260px;
+    }
+    .shield{
+      width:34px; height:34px; border-radius:10px;
+      background: linear-gradient(180deg, rgba(90,166,255,.25), rgba(90,166,255,.05));
+      border:1px solid rgba(90,166,255,.35);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.25) inset;
+      display:grid; place-items:center;
+      font-weight:700;
+      color:rgba(214,225,243,.9);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .brand h1{font-size:14px; margin:0; line-height:1.1;}
+    .brand p{margin:2px 0 0 0; font-size:12px; color:var(--muted);}
+
+    .pill{
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(31,42,58,.8);
+      background: rgba(16,24,36,.55);
+      color: var(--muted);
+      display:flex; gap:8px; align-items:center;
+      white-space:nowrap;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:999px;
+      background: var(--ok);
+      box-shadow: 0 0 0 3px rgba(53,208,127,.15);
+    }
+
+    /* Layout */
+    .wrap{
+      max-width:1280px;
+      margin:0 auto;
+      padding:16px;
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap:16px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(16,24,36,.95), rgba(15,20,30,.92));
+      border:1px solid rgba(31,42,58,.9);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Sidebar */
+    .side{padding:14px;}
+    .side h2{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: var(--muted);
+      margin:6px 0 10px 0;
+    }
+    .nav{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .nav button{
+      width:100%;
+      text-align:left;
+      border:1px solid rgba(31,42,58,.75);
+      background: rgba(15,20,30,.45);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:13px;
+    }
+    .nav button:hover{filter:brightness(1.08)}
+    .nav button.active{
+      border-color: rgba(90,166,255,.55);
+      box-shadow: 0 0 0 1px rgba(90,166,255,.12) inset;
+      background: rgba(90,166,255,.08);
+    }
+    .badge{
+      font-size:12px; color:var(--muted);
+      border:1px solid rgba(31,42,58,.8);
+      background: rgba(11,15,20,.5);
+      padding:2px 8px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .meta{
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px dashed rgba(31,42,58,.8);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .meta .k{
+      color:rgba(214,225,243,.85);
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      color:rgba(155,176,204,.95);
+    }
+
+    /* Main */
+    .main{padding:14px;}
+    .head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .case .id{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color:rgba(214,225,243,.9);
+      font-size:12px;
+    }
+    .case h2{margin:6px 0 4px 0; font-size:18px;}
+    .case .sub{font-size:12px; color:var(--muted); line-height:1.5;}
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(31,42,58,.9);
+      background: rgba(16,24,36,.7);
+      color: var(--text);
+      padding:9px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:13px;
+      display:inline-flex; align-items:center; gap:8px;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:hover{filter:brightness(1.08)}
+    .btn-accent{
+      border-color: rgba(90,166,255,.55);
+      box-shadow: 0 0 0 1px rgba(90,166,255,.12) inset;
+    }
+
+    /* Content blocks */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    .block{
+      border:1px solid rgba(31,42,58,.85);
+      background: rgba(15,20,30,.55);
+      border-radius:16px;
+      padding:12px;
+    }
+    .block h3{
+      margin:0 0 10px 0;
+      font-size:13px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:rgba(214,225,243,.92);
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap:6px 12px;
+      font-size:13px;
+      line-height:1.45;
+    }
+    .k{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      margin-top:2px;
+    }
+    .v{color:rgba(214,225,243,.95)}
+
+    .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+    .chip{
+      font-size:12px;
+      padding:5px 9px;
+      border-radius:999px;
+      background: rgba(22,35,56,.8);
+      border:1px solid rgba(31,42,58,.9);
+      color:rgba(214,225,243,.9);
+    }
+    .chip.ok{border-color: rgba(53,208,127,.35); background: rgba(53,208,127,.08)}
+    .chip.warn{border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.08)}
+    .chip.bad{border-color: rgba(255,102,119,.35); background: rgba(255,102,119,.08)}
+
+    /* Image frame */
+    .imgframe{
+      border:1px solid rgba(31,42,58,.85);
+      border-radius:16px;
+      overflow:hidden;
+      background: rgba(11,15,20,.5);
+    }
+    .imgframe img{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+    .caption{
+      padding:10px 12px;
+      border-top:1px solid rgba(31,42,58,.85);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    /* Two map images side-by-side */
+    .mapgrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns: 1fr;}
+      .mapgrid{grid-template-columns:1fr;}
+    }
+
+    /* “Document” look */
+    .doc{
+      background: rgba(7,10,14,.55);
+      border:1px solid rgba(31,42,58,.85);
+      border-radius:16px;
+      padding:12px;
+      font-size:13px;
+      line-height:1.55;
+    }
+    .doc .hdr{
+      display:flex; justify-content:space-between; gap:12px;
+      padding-bottom:10px;
+      border-bottom:1px dashed rgba(31,42,58,.85);
+      margin-bottom:10px;
+    }
+    .doc .hdr .t1{font-weight:700;}
+    .doc .hdr .t2{color:var(--muted); font-size:12px;}
+    .doc .section{margin:10px 0}
+    .doc .label{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .doc .value{color:rgba(214,225,243,.95)}
+
+    /* Suspects grid */
+    .suspect-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 980px){
+      .suspect-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px){
+      .suspect-grid{ grid-template-columns: 1fr; }
+    }
+    .suspect-card{
+      border:1px solid rgba(31,42,58,.85);
+      background: rgba(15,20,30,.55);
+      border-radius:16px;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .suspect-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .suspect-name{
+      margin:0;
+      font-size:14px;
+      font-weight:650;
+    }
+    .suspect-meta{
+      margin:2px 0 0 0;
+      color: var(--muted);
+      font-size:12px;
+    }
+    .thumb{
+      border:1px solid rgba(31,42,58,.85);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(11,15,20,.5);
+      cursor:pointer;
+    }
+    .thumb img{
+      width:100%;
+      height:180px;
+      object-fit: cover;
+      display:block;
+      filter: contrast(1.02);
+    }
+    .thumb:hover{ filter: brightness(1.06); }
+
+    /* Modal viewer */
+    .modal{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.72);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:9999;
+    }
+    .modal.open{ display:flex; }
+    .modal-inner{
+      width:min(980px, 96vw);
+      max-height: 92vh;
+      background: linear-gradient(180deg, rgba(16,24,36,.98), rgba(15,20,30,.96));
+      border:1px solid rgba(31,42,58,.9);
+      border-radius:18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:12px 12px;
+      border-bottom:1px solid rgba(31,42,58,.8);
+    }
+    .modal-title{
+      font-size:13px;
+      color: rgba(214,225,243,.92);
+      margin:0;
+    }
+    .modal-close{
+      appearance:none;
+      border:1px solid rgba(31,42,58,.9);
+      background: rgba(11,15,20,.55);
+      color: var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+    }
+    .modal-close:hover{ filter: brightness(1.08); }
+    .modal-body{
+      overflow:auto;
+      padding:12px;
+      background: rgba(7,10,14,.45);
+    }
+    .modal-body img{
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius:12px;
+      border:1px solid rgba(31,42,58,.85);
+      background:#fff;
+    }
+
+    /* Audio */
+    .audio-wrap{
+      border:1px solid rgba(31,42,58,.85);
+      background: rgba(7,10,14,.45);
+      border-radius:16px;
+      padding:12px;
+    }
+    audio{
+      width:100%;
+      display:block;
+    }
+    .audio-meta{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top">
+    <div class="top-inner">
+      <div class="brand">
+        <div class="shield">PM</div>
+        <div>
+          <h1>Politie Maasbracht — IntraWeb</h1>
+          <p>Case Vault / Restricted Access</p>
+        </div>
+      </div>
+      <div class="pill"><span class="dot"></span>SECURE CHANNEL • ONLINE</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- Sidebar -->
+    <aside class="card side">
+      <h2>Dossier</h2>
+      <div class="nav" id="nav">
+        <button class="active" data-view="overview">Overzicht <span class="badge">CASE</span></button>
+        <button data-view="suspects">Verdachten <span class="badge">9 fiches</span></button>
+        <button data-view="pv">Lijkrapport / PV <span class="badge">DOC</span></button>
+        <button data-view="id">ID — Security <span class="badge">TAG</span></button>
+        <button data-view="map">Plattegrond <span class="badge">2 FILES</span></button>
+        <button data-view="wallet">Bewijsfoto <span class="badge">WALLET</span></button>
+        <button data-view="pierre">Ondervraging Pierre <span class="badge">AUDIO</span></button>
+      </div>
+
+      <div class="meta">
+        <div><span class="k">Case ID:</span> <span class="mono">MBR-25-0217</span></div>
+        <div><span class="k">Locatie:</span> <span class="v">’t Smedenhuys</span></div>
+        <div><span class="k">Classificatie:</span> <span class="v">INTERN — RESTRICTED</span></div>
+        <div><span class="k">Laatste update:</span> <span class="v" id="lastUpdate">—</span></div>
+        <div style="margin-top:10px"><span class="k">Opmerking:</span> <span class="v">Selectieve set documenten voor spel.</span></div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="card main">
+      <div class="head">
+        <div class="case">
+          <div class="id">WORKSPACE / CASE FILE</div>
+          <h2>Karnamor — Incident Night</h2>
+          <div class="sub">
+            Interne werkruimte met kernstukken: verdachtenfiches, PV, legitimatie, plattegrond en geselecteerd bewijsmateriaal.
+            Geen externe links. Navigatie via terminal.
+          </div>
+        </div>
+        <a class="btn btn-accent" href="index.html">↩ Terminal</a>
+      </div>
+
+      <div id="view" class="grid"></div>
+    </main>
+  </div>
+
+  <!-- Modal for suspect files -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <p id="modalTitle" class="modal-title">—</p>
+        <button id="modalClose" class="modal-close">Close</button>
+      </div>
+      <div class="modal-body">
+        <img id="modalImg" src="" alt="">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== Assets: pas paden/bestanden aan ======
+    const ASSETS = {
+      // verdachtenfiches (images)
+      suspects: [
+        { name:"Frans Pijpers",  group:"Pijpers",    status:"VERIFIED", img:"img/fiches/frans-pijpers.png" },
+        { name:"Petra Pijpers",  group:"Pijpers",    status:"VERIFIED", img:"img/fiches/petra-pijpers.png" },
+        { name:"Roy Pijpers",    group:"Pijpers",    status:"NEW",      img:"img/fiches/roy-pijpers.png" },
+
+        { name:"Huub Van Kessel", group:"Van Kessel", status:"NEW",     img:"img/fiches/huub-van-kessel.png" },
+        { name:"Riet Van Kessel", group:"Van Kessel", status:"NEW",     img:"img/fiches/riet-van-kessel.png" },
+        { name:"Denny Van Kessel",group:"Van Kessel", status:"FLAGGED", img:"img/fiches/denny-van-kessel.png" },
+
+        { name:"Pierre Savelkoul", group:"Savelkoul", status:"NEW",     img:"img/fiches/pierre-savelkoul.png" },
+        { name:"Yvonne Savelkoul", group:"Savelkoul", status:"NEW",     img:"img/fiches/yvonne-savelkoul.png" },
+        { name:"Ger Savelkoul",    group:"Savelkoul", status:"NEW",     img:"img/fiches/ger-savelkoul.png" },
+      ],
+
+      // PV / lijkrapport (tekst is spelversie placeholder)
+      pv: {
+        docNo: "PV-MBR-25-0217-01",
+        date: "2026-01-01",
+        officer: "Inspecteur J. van Dijk",
+        location: "’t Smedenhuys — bureau (gelijkvloers)",
+        summary: "Slachtoffer aangetroffen levenloos. Plaats vastgesteld, perimeter ingesteld, eerste vaststellingen genoteerd. Verdere forensische verwerking volgt.",
+        timeline: [
+          { t: "02:32", d: "Melding ontvangen via security." },
+          { t: "03:41", d: "Eerste patrouille ter plaatse." },
+          { t: "03:58", d: "Bureau veiliggesteld, toegang beperkt." }
+        ]
+      },
+
+      // Security ID tag afbeelding
+      securityTagImg: "img/security-tag.png", // <- vervang met jouw tag afbeelding
+
+      // Plattegrond: 2 kleinere images naast elkaar
+      mapA: "img/mapA.png", // <- vervang
+      mapB: "img/mapB.png", // <- vervang
+
+      // Bewijsfoto: inhoud portefeuile
+      wallet: "img/wallet-inhoud.png", // <- vervang
+
+      // Audio: ondervraging Pierre
+      pierreAudio: "audio/pierre.mp3" // <- vervang (mp3/wav/ogg ok)
+    };
+
+    const view = document.getElementById("view");
+    const nav = document.getElementById("nav");
+    const lastUpdate = document.getElementById("lastUpdate");
+    lastUpdate.textContent = new Date().toLocaleString("nl-BE", { hour12:false });
+
+    function chipClass(s){
+      if (s === "VERIFIED") return "ok";
+      if (s === "FLAGGED") return "bad";
+      return "warn";
+    }
+
+    function setActive(key){
+      nav.querySelectorAll("button").forEach(b=>{
+        b.classList.toggle("active", b.getAttribute("data-view") === key);
+      });
+    }
+
+    function renderOverview(){
+      view.innerHTML = `
+        <div class="block">
+          <h3>Case snapshot</h3>
+          <div class="kv">
+            <div class="k">Case ID</div><div class="v mono">MBR-25-0217</div>
+            <div class="k">Locatie</div><div class="v">’t Smedenhuys</div>
+            <div class="k">Set</div><div class="v">Verdachten + PV + ID tag + plattegrond (2) + wallet foto + audio</div>
+            <div class="k">Beleid</div><div class="v">Geen externe links. Gebruik terminal voor navigatie.</div>
+          </div>
+          <div class="chips">
+            <span class="chip warn">ACTIVE</span>
+            <span class="chip">CHAIN-OF-CUSTODY</span>
+            <span class="chip">RESTRICTED</span>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Notities</h3>
+          <div class="doc">
+            <div class="hdr">
+              <div class="t1">Opsporing — werkafspraken</div>
+              <div class="t2 mono">SYS/CASE/LOCAL</div>
+            </div>
+            <div class="section">
+              <div class="label">Gebruik</div>
+              <div class="value">Deze pagina bevat enkel kernstukken voor het spel. Volledige dossierinhoud is niet opgenomen.</div>
+            </div>
+            <div class="section">
+              <div class="label">Navigatie</div>
+              <div class="value">Keer terug naar de terminal om andere systemen te benaderen.</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSuspects(){
+      const cards = ASSETS.suspects.map(s => `
+        <div class="suspect-card">
+          <div class="suspect-top">
+            <div>
+              <h3 class="suspect-name">${s.name}</h3>
+              <div class="suspect-meta">${s.group}</div>
+            </div>
+            <span class="chip ${chipClass(s.status)}">${s.status}</span>
+          </div>
+
+          <div class="thumb" data-img="${s.img}" data-title="${s.name}">
+            <img src="${s.img}" alt="Fiche — ${s.name}" loading="lazy">
+          </div>
+
+          <div class="mono">Click to open full file</div>
+        </div>
+      `).join("");
+
+      view.innerHTML = `
+        <div class="block">
+          <h3>Verdachten — Persoondossiers</h3>
+          <div class="suspect-grid">${cards}</div>
+        </div>
+      `;
+
+      view.querySelectorAll(".thumb").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          openModal(el.getAttribute("data-img"), el.getAttribute("data-title"));
+        });
+      });
+    }
+
+    function renderPV(){
+      const PV = ASSETS.pv;
+      view.innerHTML = `
+        <div class="block">
+          <h3>Lijkrapport / Proces-verbaal</h3>
+          <div class="doc">
+            <div class="hdr">
+              <div>
+                <div class="t1">Proces-verbaal van eerste vaststellingen</div>
+                <div class="t2">Documentnr: <span class="mono">${PV.docNo}</span></div>
+              </div>
+              <div class="t2" style="text-align:right">
+                Datum: <span class="mono">${PV.date}</span><br/>
+                Opsteller: <span class="mono">${PV.officer}</span>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="label">Locatie</div>
+              <div class="value">${PV.location}</div>
+            </div>
+
+            <div class="section">
+              <div class="label">Samenvatting</div>
+              <div class="value">${PV.summary}</div>
+            </div>
+
+            <div class="section">
+              <div class="label">Tijdlijn (kern)</div>
+              <div class="value">
+                ${PV.timeline.map(x => `<div class="mono">${x.t}</div> ${x.d}`).join("<br/><br/>")}
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="label">Opmerking</div>
+              <div class="value">Vervang deze tekst door jouw echte PV/lijkrapport (spelversie) indien nodig.</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderID(){
+      view.innerHTML = `
+        <div class="block">
+          <h3>Identiteitskaart — Security (Tag)</h3>
+
+          <div class="imgframe">
+            <img src="${ASSETS.securityTagImg}" alt="Security tag"
+                 onerror="this.closest('.imgframe').nextElementSibling.textContent='Afbeelding niet gevonden. Controleer pad: ${ASSETS.securityTagImg}'; this.style.display='none';" />
+          </div>
+
+          <div class="caption" id="idcap">
+            Security tag / badge. Bestand: <span class="mono">${ASSETS.securityTagImg}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMap(){
+      view.innerHTML = `
+        <div class="block">
+          <h3>Plattegrond — ’t Smedenhuys</h3>
+
+          <div class="mapgrid">
+            <div class="imgframe">
+              <img src="${ASSETS.mapA}" alt="Plattegrond A"
+                   onerror="this.closest('.imgframe').nextElementSibling.textContent='Afbeelding niet gevonden. Controleer pad: ${ASSETS.mapA}'; this.style.display='none';" />
+              <div class="caption">Bestand: <span class="mono">${ASSETS.mapA}</span></div>
+            </div>
+
+            <div class="imgframe">
+              <img src="${ASSETS.mapB}" alt="Plattegrond B"
+                   onerror="this.closest('.imgframe').nextElementSibling.textContent='Afbeelding niet gevonden. Controleer pad: ${ASSETS.mapB}'; this.style.display='none';" />
+              <div class="caption">Bestand: <span class="mono">${ASSETS.mapB}</span></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWallet(){
+      view.innerHTML = `
+        <div class="block">
+          <h3>Bewijsfoto — Inhoud portefeuile slachtoffer</h3>
+          <div class="imgframe">
+            <img src="${ASSETS.wallet}" alt="Portefeuile-inhoud"
+                 onerror="this.closest('.imgframe').nextElementSibling.textContent='Afbeelding niet gevonden. Controleer pad: ${ASSETS.wallet}'; this.style.display='none';" />
+          </div>
+          <div class="caption" id="walletcap">
+            Foto genomen bij eerste vaststellingen. Bestand: <span class="mono">${ASSETS.wallet}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPierre(){
+      view.innerHTML = `
+        <div class="block">
+          <h3>Ondervraging — Pierre Savelkoul</h3>
+
+          <div class="audio-wrap">
+            <audio controls preload="metadata">
+              <source src="${ASSETS.pierreAudio}" type="audio/mpeg" />
+              <source src="${ASSETS.pierreAudio}" type="audio/ogg" />
+              <source src="${ASSETS.pierreAudio}" type="audio/wav" />
+              Je browser ondersteunt geen audio element.
+            </audio>
+
+            <div class="audio-meta">
+              Bestand: <span class="mono">${ASSETS.pierreAudio}</span><br/>
+              Opmerking: als het niet afspeelt, controleer het pad + bestandsnaam, en probeer eventueel mp3 of ogg.
+            </div>
+          </div>
+
+          <div class="chips">
+            <span class="chip">INTERVIEW</span>
+            <span class="chip warn">UNTRANSCRIBED</span>
+            <span class="chip">EVIDENCE AUDIO</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function render(key){
+      setActive(key);
+      if (key === "overview") return renderOverview();
+      if (key === "suspects") return renderSuspects();
+      if (key === "pv") return renderPV();
+      if (key === "id") return renderID();
+      if (key === "map") return renderMap();
+      if (key === "wallet") return renderWallet();
+      if (key === "pierre") return renderPierre();
+      renderOverview();
+    }
+
+    nav.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-view]");
+      if (!btn) return;
+      render(btn.getAttribute("data-view"));
+    });
+
+    // ===== Modal logic =====
+    const modal = document.getElementById("modal");
+    const modalImg = document.getElementById("modalImg");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalClose = document.getElementById("modalClose");
+
+    function openModal(src, title){
+      modalImg.src = src;
+      modalImg.alt = title;
+      modalTitle.textContent = title;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(){
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      modalImg.src = "";
+    }
+
+    modalClose.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+    });
+
+    // init
+    render("overview");
+  </script>
+</body>
+</html>
