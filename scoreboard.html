@@ -103,9 +103,11 @@ const SUPABASE_URL="https://lippkwxatbzmbwakifkm.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcHBrd3hhdGJ6bWJ3YWtpZmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3ODkxNzIsImV4cCI6MjA4NzM2NTE3Mn0.QEWTN09Q_2H1OgRrJxjnlhyfjmfdp8JWpxqBshHyb7Q";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-const MATCH="2026-w1-spartans-tribes";
 const BASE="https://kevins94.github.io/";
+const params = new URLSearchParams(window.location.search);
+const MATCH = params.get("match") || "2026-w1-spartans-tribes";
 
+  
 function resolveLogo(p){return BASE+p}
 
 function ordinal(n){
