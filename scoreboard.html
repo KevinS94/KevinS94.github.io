@@ -1,172 +1,370 @@
 <!doctype html>
 <html>
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <style>
-:root{
-  --homeP:#2c3a63;
-  --homeS:#caa24a;
-  --awayP:#ffffff;
-  --awayS:#8d1730;
-}
+  :root{
+    --homeP:#2c3a63;
+    --homeS:#caa24a;
+    --awayP:#ffffff;
+    --awayS:#8d1730;
 
-html,body{
-  margin:0;
-  background:transparent;
-  overflow:hidden;
-  font-family:system-ui;
-}
+    --h: 92px;
+    --wHome: 520px;
+    --wMid: 150px;
+    --wAway: 520px;
 
-.wrap{
-  position:absolute;
-  left:50%;
-  bottom:38px;
-  transform:translateX(-50%);
-  display:flex;
-  align-items:stretch;
-  height:92px;
-  transition:all .3s ease;
-}
+    --fontA: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  }
 
-.block{
-  display:flex;
-  align-items:center;
-  transition:all .3s ease;
-}
+  html,body{
+    margin:0; padding:0;
+    background:transparent;
+    overflow:hidden;
+    width:100%; height:100%;
+    font-family: var(--fontA);
+  }
 
-.home{
-  width:520px;
-  background:var(--homeP);
-  color:var(--homeS);
-  padding:0 18px;
-  justify-content:space-between;
-}
+  /* container bottom-center */
+  .wrapHost{
+    position:absolute;
+    left:50%;
+    bottom:38px;
+    transform:translateX(-50%);
+    width: calc(var(--wHome) + var(--wMid) + var(--wAway));
+    height: var(--h);
+  }
 
-.mid{
-  width:150px;
-  background:#0b0c10;
-  color:#fff;
-  flex-direction:column;
-  justify-content:center;
-}
+  /* normal scoreboard */
+  .scorewrap{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:stretch;
+    height: var(--h);
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+  .scorewrap.hidden{
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events:none;
+  }
 
-.away{
-  width:520px;
-  background:var(--awayP);
-  color:var(--awayS);
-  padding:0 18px;
-  justify-content:space-between;
-}
+  .block{
+    height: var(--h);
+    display:flex;
+    align-items:center;
+    box-sizing:border-box;
+  }
 
-.logo{width:56px;height:56px;object-fit:contain}
-.teamName{font-size:32px;font-weight:900}
-.score{font-size:46px;font-weight:950}
-.q,.down{font-weight:900;font-size:20px}
+  .home{
+    width: var(--wHome);
+    background: var(--homeP);
+    color: var(--homeS);
+    padding: 0 18px;
+    gap: 14px;
+    justify-content:space-between;
+  }
 
-.tdExpand{
-  width:1100px !important;
-  justify-content:center !important;
-  font-size:48px;
-}
-.hidden{display:none}
+  .mid{
+    width: var(--wMid);
+    background: #0b0c10;
+    color: #fff;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap: 8px;
+  }
+
+  .away{
+    width: var(--wAway);
+    background: var(--awayP);
+    color: var(--awayS);
+    padding: 0 18px;
+    gap: 14px;
+    justify-content:space-between;
+  }
+
+  .homeLeft{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    min-width:0;
+    flex: 1;
+  }
+  .awayLeft{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    min-width:0;
+  }
+
+  .logo{
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    flex: 0 0 auto;
+  }
+
+  .teamName{
+    font-weight: 900;
+    font-size: 34px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+  }
+
+  .score{
+    font-weight: 950;
+    font-size: 46px;
+    min-width: 56px;
+    text-align:right;
+  }
+
+  .q{
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .sep{
+    width: 70%;
+    height: 3px;
+    background: rgba(255,255,255,0.75);
+  }
+  .down{
+    font-weight: 900;
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .home .teamName, .home .score{ color: var(--homeS); }
+  .away .teamName, .away .score{ color: var(--awayS); }
+
+  /* touchdown overlay banner (on top of scorewrap) */
+  .tdBanner{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 16px;
+    opacity:0;
+    transform: translateY(6px);
+    pointer-events:none;
+    transition: opacity 180ms ease, transform 180ms ease;
+    border-radius: 0; /* flat */
+  }
+  .tdBanner.show{
+    opacity:1;
+    transform: translateY(0);
+  }
+  .tdBanner .tdLogo{
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+  }
+  .tdBanner .tdText{
+    font-weight: 950;
+    font-size: 48px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
 
-<div class="wrap" id="wrap">
-  <div class="block home" id="homeBlock">
-    <div style="display:flex;gap:14px;align-items:center;">
-      <img id="homeLogo" class="logo">
-      <div id="homeName" class="teamName"></div>
+<div class="wrapHost">
+  <!-- Normal scoreboard -->
+  <div class="scorewrap" id="scorewrap">
+    <div class="block home">
+      <div class="homeLeft">
+        <img id="homeLogo" class="logo" src="" alt="">
+        <div id="homeName" class="teamName">Home</div>
+      </div>
+      <div id="homeScore" class="score">0</div>
     </div>
-    <div id="homeScore" class="score">0</div>
+
+    <div class="block mid">
+      <div id="q" class="q">Q1</div>
+      <div class="sep"></div>
+      <div id="down" class="down">1st</div>
+    </div>
+
+    <div class="block away">
+      <div id="awayScore" class="score">0</div>
+      <div class="awayLeft">
+        <div id="awayName" class="teamName">Away</div>
+        <img id="awayLogo" class="logo" src="" alt="">
+      </div>
+    </div>
   </div>
 
-  <div class="block mid" id="midBlock">
-    <div id="q" class="q">Q1</div>
-    <div id="down" class="down">1st</div>
-  </div>
-
-  <div class="block away" id="awayBlock">
-    <div id="awayScore" class="score">0</div>
-    <div style="display:flex;gap:14px;align-items:center;">
-      <div id="awayName" class="teamName"></div>
-      <img id="awayLogo" class="logo">
-    </div>
+  <!-- Touchdown banner -->
+  <div class="tdBanner" id="tdBanner">
+    <img id="tdLogo" class="tdLogo" src="" alt="">
+    <div id="tdText" class="tdText">TOUCHDOWN</div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL="https://lippkwxatbzmbwakifkm.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcHBrd3hhdGJ6bWJ3YWtpZmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3ODkxNzIsImV4cCI6MjA4NzM2NTE3Mn0.QEWTN09Q_2H1OgRrJxjnlhyfjmfdp8JWpxqBshHyb7Q";
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  // --- Supabase config (jouw gegevens) ---
+  const SUPABASE_URL = "https://lippkwxatbzmbwakifkm.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcHBrd3xhdGJ6bWJ3YWtpZmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3ODkxNzIsImV4cCI6MjA4NzM2NTE3Mn0.QEWTN09Q_2H1OgRrJxjnlhyfjmfdp8JWpxqBshHyb7Q";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const BASE="https://kevins94.github.io/";
-const params = new URLSearchParams(window.location.search);
-const MATCH = params.get("match") || "2026-w1-spartans-tribes";
+  // match slug via URL
+  const params = new URLSearchParams(window.location.search);
+  const MATCH = params.get("match") || "2026-w1-spartans-tribes";
 
-  
-function resolveLogo(p){return BASE+p}
+  // logo base (GitHub Pages root)
+  const GITHUB_BASE = "https://kevins94.github.io/";
 
-function ordinal(n){
-  if(n==1)return"1st";
-  if(n==2)return"2nd";
-  if(n==3)return"3rd";
-  return"4th";
-}
-
-function apply(row){
-  const s=row.state||{};
-
-  document.documentElement.style.setProperty("--homeP",row.home_primary);
-  document.documentElement.style.setProperty("--homeS",row.home_secondary);
-  document.documentElement.style.setProperty("--awayP",row.away_primary);
-  document.documentElement.style.setProperty("--awayS",row.away_secondary);
-
-  homeName.textContent=row.home_name;
-  awayName.textContent=row.away_name;
-  homeLogo.src=resolveLogo(row.home_logo);
-  awayLogo.src=resolveLogo(row.away_logo);
-
-  homeScore.textContent=s.home_score??0;
-  awayScore.textContent=s.away_score??0;
-  q.textContent="Q"+(s.q??1);
-  down.textContent=ordinal(s.down??1);
-
-  if(s.banner?.type==="TD" && Date.now()<s.banner.until){
-    showTD(s.banner.side,row);
-  } else reset();
-}
-
-function showTD(side,row){
-  midBlock.classList.add("hidden");
-  if(side==="home"){
-    awayBlock.classList.add("hidden");
-    homeBlock.classList.add("tdExpand");
-    homeBlock.innerHTML="<div>TOUCHDOWN "+row.home_name+"</div>";
-  }else{
-    homeBlock.classList.add("hidden");
-    awayBlock.classList.add("tdExpand");
-    awayBlock.innerHTML="<div>TOUCHDOWN "+row.away_name+"</div>";
+  function resolveLogo(path){
+    if(!path) return "";
+    if(/^https?:\/\//i.test(path)) return path;
+    return GITHUB_BASE + path.replace(/^\//,"");
   }
-}
 
-function reset(){
-  location.reload(); // simpel reset voor nu
-}
+  function ordinalDown(n){
+    n = Number(n);
+    if(!Number.isFinite(n)) n = 1;
+    n = Math.min(4, Math.max(1, Math.round(n)));
+    if(n===1) return "1st";
+    if(n===2) return "2nd";
+    if(n===3) return "3rd";
+    return "4th";
+  }
+  function clamp4(n){
+    n = Number(n);
+    if(!Number.isFinite(n)) n = 1;
+    return Math.min(4, Math.max(1, Math.round(n)));
+  }
 
-async function load(){
-  const {data}=await sb.from("match_view").select("*").eq("slug",MATCH).single();
-  if(data)apply(data);
-}
+  // DOM refs
+  const el = {
+    scorewrap: document.getElementById("scorewrap"),
+    tdBanner: document.getElementById("tdBanner"),
+    tdLogo: document.getElementById("tdLogo"),
+    tdText: document.getElementById("tdText"),
+    homeLogo: document.getElementById("homeLogo"),
+    awayLogo: document.getElementById("awayLogo"),
+    homeName: document.getElementById("homeName"),
+    awayName: document.getElementById("awayName"),
+    homeScore: document.getElementById("homeScore"),
+    awayScore: document.getElementById("awayScore"),
+    q: document.getElementById("q"),
+    down: document.getElementById("down"),
+  };
 
-sb.channel("live")
-.on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches"},load)
-.subscribe();
+  // State tracking to avoid unnecessary DOM writes (prevents jitter)
+  let lastSignature = "";
+  let bannerActiveUntil = 0;
 
-load();
+  function applyRow(row){
+    const s = row.state || {};
+    const signature = JSON.stringify({
+      hn: row.home_name, an: row.away_name,
+      hl: row.home_logo, al: row.away_logo,
+      hp: row.home_primary, hs: row.home_secondary,
+      ap: row.away_primary, as: row.away_secondary,
+      hsco: s.home_score, asco: s.away_score,
+      q: s.q, d: s.down,
+      b: s.banner
+    });
+
+    if(signature === lastSignature){
+      // still check banner timer (local)
+      renderBannerIfNeeded(row, s.banner);
+      return;
+    }
+    lastSignature = signature;
+
+    // colors
+    document.documentElement.style.setProperty("--homeP", row.home_primary || "#2c3a63");
+    document.documentElement.style.setProperty("--homeS", row.home_secondary || "#caa24a");
+    document.documentElement.style.setProperty("--awayP", row.away_primary || "#ffffff");
+    document.documentElement.style.setProperty("--awayS", row.away_secondary || "#8d1730");
+
+    // names/logos
+    el.homeName.textContent = row.home_name || "Home";
+    el.awayName.textContent = row.away_name || "Away";
+    const hl = resolveLogo(row.home_logo);
+    const al = resolveLogo(row.away_logo);
+    if(hl) el.homeLogo.src = hl;
+    if(al) el.awayLogo.src = al;
+
+    // scores
+    el.homeScore.textContent = s.home_score ?? 0;
+    el.awayScore.textContent = s.away_score ?? 0;
+    el.q.textContent = "Q" + clamp4(s.q ?? 1);
+    el.down.textContent = ordinalDown(s.down ?? 1);
+
+    renderBannerIfNeeded(row, s.banner);
+  }
+
+  function showTDBanner(side, row){
+    const isHome = side === "home";
+    const bg = isHome ? (row.home_primary || "#2c3a63") : (row.away_primary || "#ffffff");
+    const fg = isHome ? (row.home_secondary || "#caa24a") : (row.away_secondary || "#8d1730");
+    const name = isHome ? (row.home_name || "Home") : (row.away_name || "Away");
+    const logo = isHome ? resolveLogo(row.home_logo) : resolveLogo(row.away_logo);
+
+    el.tdBanner.style.background = bg;
+    el.tdText.style.color = fg;
+    el.tdText.textContent = "TOUCHDOWN " + name.toUpperCase();
+    el.tdLogo.src = logo;
+
+    el.scorewrap.classList.add("hidden");
+    el.tdBanner.classList.add("show");
+  }
+
+  function hideTDBanner(){
+    el.tdBanner.classList.remove("show");
+    el.scorewrap.classList.remove("hidden");
+  }
+
+  function renderBannerIfNeeded(row, banner){
+    const now = Date.now();
+
+    if(banner && banner.type === "TD" && banner.until && now < banner.until && (banner.side==="home" || banner.side==="away")){
+      // Only trigger once per banner until value
+      if(banner.until !== bannerActiveUntil){
+        bannerActiveUntil = banner.until;
+        showTDBanner(banner.side, row);
+      }
+    } else {
+      // banner expired or missing
+      if(bannerActiveUntil !== 0){
+        bannerActiveUntil = 0;
+        hideTDBanner();
+      }
+    }
+  }
+
+  async function load(){
+    const { data, error } = await sb
+      .from("match_view")
+      .select("*")
+      .eq("slug", MATCH)
+      .single();
+
+    if(error || !data) return;
+    applyRow(data);
+  }
+
+  // Stable polling (reliable in OBS + GH Pages)
+  // 500ms feels "instant" without hammering Supabase too hard.
+  load();
+  setInterval(load, 500);
 </script>
+
 </body>
 </html>
