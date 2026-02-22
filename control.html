@@ -1,0 +1,278 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>BAFL Control</title>
+<style>
+  :root{
+    --bg:#0b0d12; --panel:#141823; --line:rgba(255,255,255,.12);
+    --text:#fff; --muted:rgba(255,255,255,.65); --accent:#2d7cff;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui;}
+  header{padding:14px 16px;font-weight:950;font-size:18px;display:flex;justify-content:space-between;align-items:center;}
+  .small{color:var(--muted);font-weight:800;font-size:12px;}
+  .tabs{display:flex;border-bottom:1px solid var(--line);}
+  .tab{flex:1;text-align:center;padding:12px 8px;font-weight:900;color:var(--muted);cursor:pointer;}
+  .tab.active{color:var(--text);border-bottom:3px solid var(--accent);}
+  .panel{display:none;padding:14px;gap:12px;}
+  .panel.active{display:block;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;}
+  .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  button,select,input{
+    border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.06);color:var(--text);
+    padding:12px 12px;font-weight:900;font-size:16px;
+  }
+  button.primary{background:var(--accent);border-color:transparent;}
+  select{min-width:220px;flex:1}
+  button{flex:1;min-width:90px}
+  input{width:100%}
+  @media (orientation: landscape){
+    header{font-size:16px;padding:10px 14px}
+    .panel{padding:10px}
+    button{padding:12px 10px;font-size:16px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>BAFL Control</div>
+  <div class="small" id="status">…</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">Score</div>
+  <div class="tab" onclick="switchTab(1)">Standings</div>
+  <div class="tab" onclick="switchTab(2)">Next Match</div>
+</div>
+
+<!-- SCORE -->
+<div class="panel active" id="p0">
+  <div class="card">
+    <div class="label">Match</div>
+    <div class="row">
+      <select id="matchSlug"></select>
+      <button class="primary" onclick="loadMatch()">Load</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Teams</div>
+    <div class="row">
+      <select id="homeTeam"></select>
+      <select id="awayTeam"></select>
+      <button onclick="saveTeams()">Set</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Home Score</div>
+    <div class="row">
+      <button onclick="addScore('home',6)">+6</button>
+      <button onclick="addScore('home',3)">+3</button>
+      <button onclick="addScore('home',2)">+2</button>
+      <button onclick="addScore('home',1)">+1</button>
+      <button onclick="addScore('home',-1)">-1</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Away Score</div>
+    <div class="row">
+      <button onclick="addScore('away',6)">+6</button>
+      <button onclick="addScore('away',3)">+3</button>
+      <button onclick="addScore('away',2)">+2</button>
+      <button onclick="addScore('away',1)">+1</button>
+      <button onclick="addScore('away',-1)">-1</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Quarter / Down</div>
+    <div class="row">
+      <button onclick="bump('q',+1)">Q +</button>
+      <button onclick="bump('q',-1)">Q -</button>
+      <button onclick="bump('down',+1)">Down +</button>
+      <button onclick="bump('down',-1)">Down -</button>
+      <button onclick="setQD(1,1)">Reset Q1/1st</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Banners</div>
+    <div class="row">
+      <button class="primary" onclick="touchdown('home')">TD Home (5s)</button>
+      <button class="primary" onclick="touchdown('away')">TD Away (5s)</button>
+    </div>
+  </div>
+</div>
+
+<!-- STANDINGS -->
+<div class="panel" id="p1">
+  <div class="card">
+    <div class="label">DIV1 Standings overlay</div>
+    <div class="row">
+      <button class="primary" onclick="setOverlay('standings_div1', true)">Show</button>
+      <button onclick="setOverlay('standings_div1', false)">Hide</button>
+    </div>
+    <div class="small" style="margin-top:10px;">
+      Standings worden automatisch uit Supabase gehaald via view <b>standings_div1</b>.
+    </div>
+  </div>
+</div>
+
+<!-- NEXT MATCH -->
+<div class="panel" id="p2">
+  <div class="card">
+    <div class="label">Next match teams</div>
+    <div class="row">
+      <select id="nextHome"></select>
+      <select id="nextAway"></select>
+      <button class="primary" onclick="saveNextMatch()">Save</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Details</div>
+    <input id="nextTitle" placeholder="Next Match" value="Next Match"/>
+    <div style="height:10px"></div>
+    <input id="nextVenue" placeholder="Venue (optional)"/>
+    <div class="row">
+      <button class="primary" onclick="toggleNext(true)">Show</button>
+      <button onclick="toggleNext(false)">Hide</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // TODO: vul in
+  const SUPABASE_URL = "https://lippkwxatbzmbwakifkm.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcHBrd3hhdGJ6bWJ3YWtpZmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3ODkxNzIsImV4cCI6MjA4NzM2NTE3Mn0.QEWTN09Q_2H1OgRrJxjnlhyfjmfdp8JWpxqBshHyb7Q";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentSlug = "2026-w1-spartans-tribes";
+
+  function $(id){ return document.getElementById(id); }
+  function setStatus(t){ $("status").textContent = t; }
+
+  function switchTab(i){
+    document.querySelectorAll(".tab").forEach((t,idx)=>t.classList.toggle("active", idx===i));
+    ["p0","p1","p2"].forEach((pid,idx)=>$(pid).classList.toggle("active", idx===i));
+  }
+
+  async function loadTeamsInto(selectEl){
+    const { data, error } = await sb.from("teams").select("id,name").order("name");
+    if(error){ setStatus("Teams load error"); return; }
+    selectEl.innerHTML = "";
+    data.forEach(t=>{
+      const o = document.createElement("option");
+      o.value = t.id; o.textContent = t.name;
+      selectEl.appendChild(o);
+    });
+  }
+
+  async function loadMatchSlugs(){
+    const { data } = await sb.from("matches").select("slug").order("created_at", { ascending:false });
+    $("matchSlug").innerHTML = "";
+    (data || []).forEach(m=>{
+      const o = document.createElement("option");
+      o.value = m.slug; o.textContent = m.slug;
+      $("matchSlug").appendChild(o);
+    });
+    $("matchSlug").value = currentSlug;
+  }
+
+  async function loadMatch(){
+    currentSlug = $("matchSlug").value;
+    const { data, error } = await sb.from("matches").select("*").eq("slug", currentSlug).single();
+    if(error){ setStatus("Match load error"); return; }
+    $("homeTeam").value = data.home_team_id;
+    $("awayTeam").value = data.away_team_id;
+    setStatus("Loaded " + currentSlug);
+  }
+
+  async function saveTeams(){
+    const home = $("homeTeam").value;
+    const away = $("awayTeam").value;
+    await sb.from("matches").update({ home_team_id: home, away_team_id: away, updated_at: new Date().toISOString() }).eq("slug", currentSlug);
+    setStatus("Teams set");
+  }
+
+  async function getMatchState(){
+    const { data } = await sb.from("matches").select("state").eq("slug", currentSlug).single();
+    return data?.state;
+  }
+
+  async function saveMatchState(state){
+    await sb.from("matches").update({ state, updated_at: new Date().toISOString() }).eq("slug", currentSlug);
+  }
+
+  async function addScore(side, v){
+    const s = await getMatchState();
+    const key = side + "_score";
+    s[key] = Math.max(0, Number(s[key] || 0) + v);
+    await saveMatchState(s);
+    setStatus(`${side} ${v>0?"+":""}${v}`);
+  }
+
+  async function bump(key, delta){
+    const s = await getMatchState();
+    s[key] = Math.min(4, Math.max(1, Number(s[key] || 1) + delta));
+    await saveMatchState(s);
+    setStatus(`${key} ${s[key]}`);
+  }
+
+  async function setQD(q, down){
+    const s = await getMatchState();
+    s.q = q; s.down = down;
+    await saveMatchState(s);
+    setStatus("Reset Q/Down");
+  }
+
+  async function touchdown(side){
+    const s = await getMatchState();
+    s.banner = { type:"TD", side, until: Date.now() + 5000 };
+    await saveMatchState(s);
+    setStatus("TD " + side);
+  }
+
+  async function setOverlay(slug, show){
+    await sb.from("overlay_visibility")
+      .upsert({ slug, show, updated_at: new Date().toISOString() });
+    setStatus(`${slug}: ${show?"show":"hide"}`);
+  }
+
+  async function saveNextMatch(){
+    await sb.from("next_match").upsert({
+      slug: "main",
+      title: $("nextTitle").value || "Next Match",
+      venue: $("nextVenue").value || null,
+      home_team_id: $("nextHome").value,
+      away_team_id: $("nextAway").value,
+      updated_at: new Date().toISOString()
+    });
+    setStatus("Next match saved");
+  }
+
+  async function toggleNext(show){
+    await sb.from("next_match").upsert({ slug:"main", show, updated_at: new Date().toISOString() });
+    setStatus("Next match " + (show?"show":"hide"));
+  }
+
+  // init
+  (async function init(){
+    await loadTeamsInto($("homeTeam"));
+    await loadTeamsInto($("awayTeam"));
+    await loadTeamsInto($("nextHome"));
+    await loadTeamsInto($("nextAway"));
+    await loadMatchSlugs();
+    await loadMatch();
+    setStatus("Ready");
+  })();
+</script>
+</body>
+</html>
