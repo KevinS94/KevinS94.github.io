@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  :root{
+    --homeP:#2c3a63;   /* background home */
+    --homeS:#caa24a;   /* text home */
+    --awayP:#ffffff;   /* background away */
+    --awayS:#8d1730;   /* text away */
+
+    --h: 92px;
+    --wHome: 520px;
+    --wMid: 150px;
+    --wAway: 520px;
+
+    --fontA: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  }
+
+  html,body{
+    margin:0; padding:0;
+    background:transparent;
+    overflow:hidden;
+    width:100%; height:100%;
+    font-family: var(--fontA);
+  }
+
+  .wrap{
+    position:absolute;
+    left:50%;
+    bottom:38px;
+    transform:translateX(-50%);
+    display:flex;
+    align-items:stretch;
+    height: var(--h);
+  }
+
+  .block{
+    height: var(--h);
+    display:flex;
+    align-items:center;
+    box-sizing:border-box;
+  }
+
+  .home{
+    width: var(--wHome);
+    background: var(--homeP);
+    color: var(--homeS);
+    padding: 0 18px;
+    gap: 14px;
+  }
+
+  .mid{
+    width: var(--wMid);
+    background: #0b0c10;
+    color: #fff;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap: 8px;
+  }
+
+  .away{
+    width: var(--wAway);
+    background: var(--awayP);
+    color: var(--awayS);
+    padding: 0 18px;
+    gap: 14px;
+    justify-content:space-between;
+  }
+
+  .homeLeft{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    min-width:0;
+    flex: 1;
+  }
+  .awayLeft{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+  }
+
+  .logo{
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+  }
+
+  .teamName{
+    font-weight: 900;
+    font-size: 34px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+  }
+
+  .score{
+    font-weight: 950;
+    font-size: 46px;
+    min-width: 56px;
+    text-align:right;
+  }
+
+  .q{
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .sep{
+    width: 70%;
+    height: 3px;
+    background: rgba(255,255,255,0.75);
+  }
+  .down{
+    font-weight: 900;
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .home .teamName, .home .score{ color: var(--homeS); }
+  .away .teamName, .away .score{ color: var(--awayS); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="block home">
+    <div class="homeLeft">
+      <img id="homeLogo" class="logo" src="" alt="">
+      <div id="homeName" class="teamName">Home</div>
+    </div>
+    <div id="homeScore" class="score">0</div>
+  </div>
+
+  <div class="block mid">
+    <div id="q" class="q">Q1</div>
+    <div class="sep"></div>
+    <div id="down" class="down">1st</div>
+  </div>
+
+  <div class="block away">
+    <div id="awayScore" class="score">0</div>
+    <div class="awayLeft">
+      <div id="awayName" class="teamName">Away</div>
+      <img id="awayLogo" class="logo" src="" alt="">
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ✅ VUL IN
+  const SUPABASE_URL = "https://lippkwxatbzmbwakifkm.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcHBrd3hhdGJ6bWJ3YWtpZmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3ODkxNzIsImV4cCI6MjA4NzM2NTE3Mn0.QEWTN09Q_2H1OgRrJxjnlhyfjmfdp8JWpxqBshHyb7Q";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const MATCH_SLUG = params.get("match") || "2026-w1-spartans-tribes";
+
+  function ordinalDown(n){
+    n = Number(n);
+    if(!Number.isFinite(n)) n = 1;
+    n = Math.min(4, Math.max(1, Math.round(n)));
+    if(n===1) return "1st";
+    if(n===2) return "2nd";
+    if(n===3) return "3rd";
+    return "4th";
+  }
+  function clamp4(n){
+    n = Number(n);
+    if(!Number.isFinite(n)) n = 1;
+    return Math.min(4, Math.max(1, Math.round(n)));
+  }
+
+  // Als je logo’s relatief zijn (logos/..), zet dit op true zodat het via GH Pages correct is:
+  const USE_GITHUB_BASE_FOR_LOGOS = false;
+  const GITHUB_BASE = location.origin + location.pathname.replace(/\/[^\/]*$/, "/"); // folder van scoreboard.html
+
+  function resolveLogo(path){
+    if(!path) return "";
+    if(/^https?:\/\//i.test(path)) return path;
+    if(USE_GITHUB_BASE_FOR_LOGOS) return GITHUB_BASE + path.replace(/^\//,"");
+    return path;
+  }
+
+  function applyState(row){
+    const state = row.state || {};
+
+    // kleuren
+    document.documentElement.style.setProperty("--homeP", row.home_primary || "#2c3a63");
+    document.documentElement.style.setProperty("--homeS", row.home_secondary || "#caa24a");
+    document.documentElement.style.setProperty("--awayP", row.away_primary || "#ffffff");
+    document.documentElement.style.setProperty("--awayS", row.away_secondary || "#8d1730");
+
+    // namen / logo’s
+    document.getElementById("homeName").textContent = row.home_name || "Home";
+    document.getElementById("awayName").textContent = row.away_name || "Away";
+
+    const hl = resolveLogo(row.home_logo);
+    const al = resolveLogo(row.away_logo);
+    if(hl) document.getElementById("homeLogo").src = hl;
+    if(al) document.getElementById("awayLogo").src = al;
+
+    // scores / q / down
+    document.getElementById("homeScore").textContent = state.home_score ?? 0;
+    document.getElementById("awayScore").textContent = state.away_score ?? 0;
+    document.getElementById("q").textContent = "Q" + clamp4(state.q ?? 1);
+    document.getElementById("down").textContent = ordinalDown(state.down ?? 1);
+  }
+
+  async function loadOnce(){
+    const { data, error } = await sb
+      .from("match_view")
+      .select("*")
+      .eq("slug", MATCH_SLUG)
+      .single();
+
+    if(!error && data) applyState(data);
+  }
+
+  function subscribe(){
+    // We luisteren naar updates in matches; bij update halen we match_view opnieuw op (simpel & betrouwbaar).
+    sb.channel("match-"+MATCH_SLUG)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "matches", filter: "slug=eq."+MATCH_SLUG },
+        () => loadOnce()
+      )
+      .subscribe();
+  }
+
+  loadOnce();
+  subscribe();
+</script>
+</body>
+</html>
