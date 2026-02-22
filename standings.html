@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+body{margin:0;background:transparent;font-family:system-ui;color:white}
+.wrap{position:absolute;top:80px;left:50%;transform:translateX(-50%);width:1000px}
+.row{display:flex;justify-content:space-between;padding:12px;background:#111;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const sb=supabase.createClient("https://lippkwxatbzmbwakifkm.supabase.co","ANON_KEY");
+
+async function load(){
+ const {data}=await sb.from("standings_div1").select("*");
+ wrap.innerHTML="";
+ data.forEach((t,i)=>{
+  wrap.innerHTML+=`
+   <div class="row">
+    <div>${i+1}. ${t.name}</div>
+    <div>${t.w}-${t.l}</div>
+    <div>${t.pf}</div>
+   </div>`
+ })
+}
+load()
+</script>
+</body>
+</html>
