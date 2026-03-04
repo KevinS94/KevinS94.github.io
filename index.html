@@ -47,12 +47,10 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'IBM Plex S
 .tsep{width:32px;height:1px;background:var(--border);margin:2px 0;}
 /* tool colors */
 .tbtn[data-t="select"]{border-color:#8a9ab0;} .tbtn[data-t="select"].active{background:var(--bg-hover);} .tbtn[data-t="select"] svg,.tbtn[data-t="select"] span{color:#8a9ab0;}
-.tbtn[data-t="top"]{border-color:#e74c3c;} .tbtn[data-t="top"].active{background:rgba(231,76,60,.2);} .tbtn[data-t="top"] svg,.tbtn[data-t="top"] span{color:#e74c3c;}
-.tbtn[data-t="bottom"]{border-color:#2ecc71;} .tbtn[data-t="bottom"].active{background:rgba(46,204,113,.2);} .tbtn[data-t="bottom"] svg,.tbtn[data-t="bottom"] span{color:#2ecc71;}
-.tbtn[data-t="yard"]{border-color:#f5a623;} .tbtn[data-t="yard"].active{background:rgba(245,166,35,.2);} .tbtn[data-t="yard"] svg,.tbtn[data-t="yard"] span{color:#f5a623;}
-.tbtn[data-t="scrimmage"]{border-color:#9b59b6;} .tbtn[data-t="scrimmage"].active{background:rgba(155,89,182,.2);} .tbtn[data-t="scrimmage"] svg,.tbtn[data-t="scrimmage"] span{color:#9b59b6;}
 .tbtn[data-t="player"]{border-color:#3498db;} .tbtn[data-t="player"].active{background:rgba(52,152,219,.2);} .tbtn[data-t="player"] svg,.tbtn[data-t="player"] span{color:#3498db;}
 .tbtn[data-t="arrow"]{border-color:#1abc9c;} .tbtn[data-t="arrow"].active{background:rgba(26,188,156,.2);} .tbtn[data-t="arrow"] svg,.tbtn[data-t="arrow"] span{color:#1abc9c;}
+.tbtn[data-t="line"]{border-color:#f5a623;} .tbtn[data-t="line"].active{background:rgba(245,166,35,.2);} .tbtn[data-t="line"] svg,.tbtn[data-t="line"] span{color:#f5a623;}
+.tbtn[data-t="zone"]{border-color:#9b59b6;} .tbtn[data-t="zone"].active{background:rgba(155,89,182,.2);} .tbtn[data-t="zone"] svg,.tbtn[data-t="zone"] span{color:#9b59b6;}
 .tbtn[data-t="pen"]{border-color:#e67e22;} .tbtn[data-t="pen"].active{background:rgba(230,126,34,.2);} .tbtn[data-t="pen"] svg,.tbtn[data-t="pen"] span{color:#e67e22;}
 .tbtn[data-t="delobj"]{border-color:#e74c3c;} .tbtn[data-t="delobj"] svg,.tbtn[data-t="delobj"] span{color:#e74c3c;} .tbtn[data-t="delobj"]:hover{background:rgba(231,76,60,.15);}
 
@@ -230,7 +228,7 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'IBM Plex S
 
 <!-- HEADER -->
 <div id="app-header">
-  <div class="logo">⚽ Soccer Scout Analyst <span>v3.0 · Scouting Tool</span></div>
+  <div class="logo">⚽ Soccer Analyse Kit <span>v1.0 · Video Scouting Tool</span></div>
   <div class="hdr-actions">
     <label class="btn" for="vid-input-hdr">📂 Load Video</label>
     <input type="file" id="vid-input-hdr" accept="video/*" style="display:none">
@@ -249,7 +247,8 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'IBM Plex S
       </div>
 
       <div style="font-size:11px;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;line-height:1.6;">
-        ! SAVE EERST HET PROJECT VOOR JE DOORGAAT NAAR DE VIDEO !
+        ! SAVE EERST HET PROJECT VOOR JE DOORGAAT NAAR DE VIDEO !<br>
+        <br>
         De video en het project worden naar de Clip Cutter gestuurd.<br>
         Je ontvangt een highlight reel met alle events aaneengeplakt.
       </div>
@@ -309,25 +308,17 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'IBM Plex S
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-3 7z"/></svg><span>Sel</span>
     </button>
     <div class="tsep"></div>
-    <div class="tlabel">Lines</div>
-    <button class="tbtn" data-t="top" onclick="setTool('top')" title="Top Sideline [T]">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="14" x2="21" y2="18"/></svg><span>Top</span>
+    <div class="tlabel">Teken</div>
+    <button class="tbtn" data-t="arrow" onclick="setTool('arrow')" title="Pijl [A]">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="8 5 19 5 19 16"/></svg><span>Pijl</span>
     </button>
-    <button class="tbtn" data-t="bottom" onclick="setTool('bottom')" title="Bottom Sideline [B]">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="10" x2="21" y2="6"/><line x1="3" y1="16" x2="21" y2="16"/></svg><span>Bot</span>
+    <button class="tbtn" data-t="line" onclick="setTool('line')" title="Lijn [L]">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="20" x2="20" y2="4"/></svg><span>Lijn</span>
     </button>
-    <button class="tbtn" data-t="yard" onclick="setTool('yard')" title="Yard Line [Y]">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="3" x2="12" y2="21"/></svg><span>Yard</span>
+    <button class="tbtn" data-t="zone" onclick="setTool('zone')" title="Zone [Z]">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="2"/></svg><span>Zone</span>
     </button>
-    <button class="tbtn" data-t="scrimmage" onclick="setTool('scrimmage')" title="Line of Scrimmage [L]">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="4 3"/></svg><span>LOS</span>
-    </button>
-    <div class="tsep"></div>
-    <div class="tlabel">Draw</div>
-    <button class="tbtn" data-t="arrow" onclick="setTool('arrow')" title="Arrow [A]">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="8 5 19 5 19 16"/></svg><span>Arrow</span>
-    </button>
-    <button class="tbtn" data-t="pen" onclick="setTool('pen')" title="Freehand [F]">
+    <button class="tbtn" data-t="pen" onclick="setTool('pen')" title="Vrije lijn [F]">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Pen</span>
     </button>
     <div class="tsep"></div>
@@ -436,19 +427,16 @@ const S = {
 };
 
 const TOOL_COLORS = {
-  top:'#e74c3c', bottom:'#2ecc71', yard:'#f5a623',
-  scrimmage:'#9b59b6', player:'#3498db',
-  arrow:'#1abc9c', pen:'#e67e22',
+  arrow:'#1abc9c', line:'#f5a623', zone:'#9b59b6',
+  pen:'#e67e22', player:'#3498db',
 };
 const TOOL_HINTS = {
-  select:'SELECT — click to select, drag to move objects',
-  top:'TOP SIDELINE — drag to draw reference line',
-  bottom:'BOTTOM SIDELINE — drag to draw reference line',
-  yard:'YARD LINE — drag to draw',
-  scrimmage:'LINE OF SCRIMMAGE — drag to draw (dashed)',
-  arrow:'ARROW — drag to draw directional arrow',
-  pen:'FREEHAND PEN — draw freely',
-  player:'PLAYER MARKER — click to place',
+  select:'SELECTEER — klik om te selecteren, sleep om te verplaatsen',
+  arrow:'PIJL — sleep om een pijl te tekenen',
+  line:'LIJN — sleep om een rechte lijn te tekenen',
+  zone:'ZONE — sleep om een rechthoekige zone te tekenen',
+  pen:'VRIJE LIJN — teken vrij',
+  player:'SPELER MARKER — klik om te plaatsen',
 };
 
 // Soccer scouting categories and their skills
@@ -667,15 +655,27 @@ function onRawDown(e) {
 
   isDrawing = true;
   const color = TOOL_COLORS[tool] || '#fff';
-  const dash  = tool === 'scrimmage' ? [10,6] : undefined;
-  drawObj = new fabric.Line([p.x, p.y, p.x, p.y], {
-    stroke: color, strokeWidth: 2.5,
-    strokeDashArray: dash,
-    selectable: false, evented: false,
-    tag: tool,
-    // Disable all transform controls — lines use endpoint handles instead
-    hasControls: false, hasBorders: false,
-  });
+
+  if (tool === 'zone') {
+    drawObj = new fabric.Rect({
+      left:p.x, top:p.y, width:1, height:1,
+      fill:'rgba(155,89,182,0.15)', stroke:color, strokeWidth:2,
+      selectable:false, evented:false, tag:'zone',
+      hasControls:false, hasBorders:false,
+    });
+    drawObj._startX = p.x;
+    drawObj._startY = p.y;
+  } else {
+    // arrow or line — store absolute start for correct arrowhead angle
+    drawObj = new fabric.Line([p.x, p.y, p.x, p.y], {
+      stroke: color, strokeWidth: 2.5,
+      selectable: false, evented: false,
+      tag: tool,
+      hasControls: false, hasBorders: false,
+    });
+    drawObj._absX1 = p.x;
+    drawObj._absY1 = p.y;
+  }
   fc.add(drawObj);
   fc.renderAll();
 }
@@ -719,11 +719,16 @@ function onRawMove(e) {
   // Normal drawing
   if (!isDrawing || !drawObj) return;
   const p = canvasPoint(e);
-  if (S.tool === 'arrow') {
+  if (S.tool === 'zone') {
+    const x = Math.min(p.x, drawObj._startX);
+    const y = Math.min(p.y, drawObj._startY);
+    drawObj.set({ left:x, top:y, width:Math.abs(p.x-drawObj._startX), height:Math.abs(p.y-drawObj._startY) });
+  } else if (S.tool === 'arrow') {
     drawObj.set({ x2: p.x, y2: p.y });
+    drawObj._lastAbsEnd = { x: p.x, y: p.y };
     // Update live arrowhead preview
     if (drawObj._arrowHead) fc.remove(drawObj._arrowHead);
-    const angle = Math.atan2(p.y - drawObj.y1, p.x - drawObj.x1);
+    const angle = Math.atan2(p.y - drawObj._absY1, p.x - drawObj._absX1);
     const head = new fabric.Triangle({
       left: p.x, top: p.y, width: 12, height: 16,
       fill: TOOL_COLORS.arrow, angle: (angle*180/Math.PI)+90,
@@ -753,23 +758,32 @@ function onRawUp(e) {
   // Remove preview arrowhead if any
   if (drawObj._arrowHead) { fc.remove(drawObj._arrowHead); drawObj._arrowHead = null; }
 
+  // Zone: check minimum size
+  if (S.tool === 'zone') {
+    if ((drawObj.width||0) < 5 || (drawObj.height||0) < 5) { fc.remove(drawObj); drawObj = null; fc.renderAll(); return; }
+    drawObj.set({ selectable:false, evented:false });
+    drawObj = null; fc.renderAll(); saveOverlay(); return;
+  }
+
   const len = Math.hypot(drawObj.x2 - drawObj.x1, drawObj.y2 - drawObj.y1);
   if (len < 5) { fc.remove(drawObj); drawObj = null; fc.renderAll(); return; }
 
   if (S.tool === 'arrow') {
-    const angle = Math.atan2(drawObj.y2 - drawObj.y1, drawObj.x2 - drawObj.x1);
+    // Use stored absolute end position for correct angle
+    const ex = drawObj._lastAbsEnd ? drawObj._lastAbsEnd.x : drawObj._absX1;
+    const ey = drawObj._lastAbsEnd ? drawObj._lastAbsEnd.y : drawObj._absY1;
+    const angle = Math.atan2(ey - drawObj._absY1, ex - drawObj._absX1);
     const tri = new fabric.Triangle({
-      left: drawObj.x2, top: drawObj.y2,
-      width: 12, height: 16,
+      left: ex, top: ey,
+      width: 14, height: 18,
       fill: TOOL_COLORS.arrow,
       angle: (angle * 180 / Math.PI) + 90,
       originX: 'center', originY: 'center',
       selectable: false, evented: false, tag: 'arrow-head',
       hasControls:false, hasBorders:false,
     });
-    drawObj.set({ selectable: false, evented: false, hasControls:false, hasBorders:false });
+    drawObj.set({ selectable:false, evented:false, hasControls:false, hasBorders:false });
     fc.add(tri);
-    // Store endpoint data on the line for later handle editing
     drawObj._arrowTri = tri;
   } else {
     drawObj.set({ selectable: false, evented: false, hasControls:false, hasBorders:false });
@@ -986,10 +1000,10 @@ function addItem(kind) {
   const t  = video.currentTime;
   S.items.push({id,kind,t,frame:Math.round(t*S.fps)});
   S.items.sort((a,b)=>a.t-b.t);
-  const base = {notes:'',fumble:false,interception:false,penalty:false,touchdown:false};
+  const base = {notes:''};
   S.params[id] = kind==='play'
-    ? {...base,phase:'OFF',type:'PASS',down:1,sack:false,incomplete:false}
-    : {...base,label:''};
+    ? {...base, phase:'BALBEZIT', player:'', position:''}
+    : {...base, label:'', player:'', position:''};
   S.overlays[id] = null;
   renderTimeline(); selectItem(id);
   notify(`${kind.toUpperCase()} added @ ${fmt(t)}`);
@@ -1057,9 +1071,10 @@ function renderParams() {
   if (item.kind==='play') {
     const phase = p.phase || 'BALBEZIT';
     const sec = phase === 'BALVERLIES' ? SCOUT_SECTIONS.balverlies : SCOUT_SECTIONS.balbezit;
+    const isVerlies = phase === 'BALVERLIES';
     const subsHtml = sec.subs.map(sub => {
       const skillsHtml = sub.skills.map(sk => `
-        <label class="ci ci-s1" title="${sk.label}">
+        <label class="ci ${isVerlies ? 'ci-d1' : 'ci-s1'}" title="${sk.label}">
           <input type="checkbox" ${p[sk.key]?'checked':''} onchange="toggleFlag('${sk.key}',this.checked)">
           <div class="cbox"></div>
           <span class="clabel">${sk.label}</span>
@@ -1092,6 +1107,7 @@ function renderParams() {
     form.innerHTML=`
       <div class="fg"><label>Event Label</label><input type="text" value="${p.label||''}" oninput="setParamD('label',this.value)" placeholder="bv. doelkans, corner, wissel…" style="min-width:160px"></div>
       <div class="fg"><label>Speler</label><input type="text" value="${p.player||''}" oninput="setParamD('player',this.value)" placeholder="naam / nummer…" style="min-width:120px"></div>
+      <div class="fg"><label>Positie</label><input type="text" value="${p.position||''}" oninput="setParamD('position',this.value)" placeholder="bv. spits, centrale mid…" style="min-width:120px"></div>
       <div class="fg notes-g"><label>Notities</label><textarea oninput="setParamD('notes',this.value)">${p.notes||''}</textarea></div>`;
   }
 }
