@@ -230,7 +230,7 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'IBM Plex S
 
 <!-- HEADER -->
 <div id="app-header">
-  <div class="logo">⚽ Soccer Scout Analyst <span>v2.7 · Scouting Tool</span></div>
+  <div class="logo">⚽ Soccer Scout Analyst <span>v3.0 · Scouting Tool</span></div>
   <div class="hdr-actions">
     <label class="btn" for="vid-input-hdr">📂 Load Video</label>
     <input type="file" id="vid-input-hdr" accept="video/*" style="display:none">
@@ -1355,14 +1355,15 @@ document.addEventListener('keydown', e=>{
   if(e.code==='ArrowRight'){e.preventDefault();frameStep(1);}
   if((e.ctrlKey||e.metaKey)&&e.code==='KeyS'){e.preventDefault();saveProject();}
   if(e.code==='KeyV') setTool('select');
-  if(e.code==='KeyT') setTool('top');
-  if(e.code==='KeyB') setTool('bottom');
-  if(e.code==='KeyY') setTool('yard');
-  if(e.code==='KeyL') setTool('scrimmage');
   if(e.code==='KeyA') setTool('arrow');
+  if(e.code==='KeyL') setTool('line');
+  if(e.code==='KeyZ') setTool('zone');
   if(e.code==='KeyF') setTool('pen');
-  if(e.code==='KeyP') setTool('player');
-  if(e.code==='KeyO') toggleOverlay();
+  if(e.code==='KeyM') setTool('player');  // AZERTY: P is on M position
+  if(e.code==='KeyO') addItem('play');    // [o] = nieuwe actie (AZERTY)
+  if(e.code==='KeyP') addItem('event');   // [p] = nieuw event (AZERTY)
+  if(e.code==='KeyD') setTool('delobj');
+  if(e.code==='Escape') setTool('select');
   if(e.code==='Delete'||e.code==='Backspace') deleteSelected();
 });
 </script>
