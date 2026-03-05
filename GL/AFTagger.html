@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Iron Scout — American Football Analyst</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Barlow:wght@300;400;500&display=swap');
+:root {
+  --bg-deep:#08090b; --bg-panel:#0e1014; --bg-card:#151820; --bg-hover:#1b2028;
+  --border:#1e2530; --border-bright:#2a3444;
+  --accent:#e8b84b; --red:#e05252; --green:#3dba7e; --blue:#4e9de8; --purple:#9b72e8;
+  --text-primary:#dde4ef; --text-secondary:#7a8fa8; --text-dim:#3a4a5c;
+  --play-color:#e8b84b; --event-color:#4e9de8;
+  --col-wr:#f87171; --col-rb:#34d399; --col-te:#a78bfa; --col-ol:#94a3b8; --col-qb:#fbbf24;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg-deep);color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+#app-header{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:46px;background:var(--bg-panel);border-bottom:2px solid var(--accent);flex-shrink:0;z-index:200;}
+.logo{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;letter-spacing:4px;color:var(--accent);display:flex;align-items:center;gap:10px;text-transform:uppercase;}
+.logo-sub{color:var(--text-secondary);font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;font-weight:400;text-transform:none;}
+.hdr-actions{display:flex;gap:8px;align-items:center;}
+.mode-toggle{display:flex;border:1px solid var(--border-bright);border-radius:3px;overflow:hidden;}
+.mode-btn{padding:4px 12px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;border:none;transition:all .15s;}
+.mode-btn:hover{color:var(--text-primary);}
+.mode-btn.active{background:var(--accent);color:#000;font-weight:700;}
+.btn{padding:5px 14px;border:1px solid var(--border-bright);background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:all .15s;border-radius:2px;}
+.btn:hover{background:var(--bg-hover);border-color:var(--accent);color:var(--accent);}
+.btn-accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
+.btn-accent:hover{background:#f5c85c;color:#000;}
+.btn-danger{border-color:var(--red);color:var(--red);}
+.btn-danger:hover{background:rgba(224,82,82,.15);}
+.btn-play{border-color:var(--play-color);color:var(--play-color);}
+.btn-play:hover{background:rgba(232,184,75,.12);}
+.btn-event{border-color:var(--event-color);color:var(--event-color);}
+.btn-event:hover{background:rgba(78,157,232,.12);}
+
+/* ── MAIN LAYOUT ──
+   Col 1: toolbar (58px fixed)
+   Col 2: video area (fills remaining space)
+   Col 3: timeline panel (280px fixed)
+   Row 1: video + toolbar (fills)
+   Row 2: params panel (resizable, default 280px)
+*/
+#main-layout{display:grid;grid-template-columns:58px 1fr 280px;grid-template-rows:1fr 280px;flex:1;overflow:hidden;}
+
+/* ── TOOL PANEL ── */
+#tool-panel{
+  grid-row:1; grid-column:1;
+  background:var(--bg-panel); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center;
+  padding:10px 0; gap:5px; z-index:10; overflow-y:auto;
+}
+.tlabel{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin:4px 0 2px;}
+.tbtn{width:42px;height:42px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:4px;transition:all .15s;}
+.tbtn:hover{background:var(--bg-hover);}
+.tbtn.active{border-width:2px;}
+.tbtn svg{width:17px;height:17px;}
+.tbtn span{font-size:7px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;text-transform:uppercase;}
+.tsep{width:34px;height:1px;background:var(--border);margin:2px 0;}
+.tbtn[data-t="select"]{border-color:#7a8fa8;}
+.tbtn[data-t="select"].active{background:rgba(122,143,168,.15);}
+.tbtn[data-t="select"] svg,.tbtn[data-t="select"] span{color:#7a8fa8;}
+.tbtn[data-t="scrimmage"]{border-color:var(--accent);}
+.tbtn[data-t="scrimmage"].active{background:rgba(232,184,75,.15);}
+.tbtn[data-t="scrimmage"] svg,.tbtn[data-t="scrimmage"] span{color:var(--accent);}
+.tbtn[data-t="delobj"]{border-color:var(--red);}
+.tbtn[data-t="delobj"] svg,.tbtn[data-t="delobj"] span{color:var(--red);}
+.tbtn[data-t="delobj"]:hover{background:rgba(224,82,82,.12);}
+.tbtn[data-t="overlay"]{border-color:var(--blue);}
+.tbtn[data-t="overlay"] svg,.tbtn[data-t="overlay"] span{color:var(--blue);}
+.tbtn[data-t="overlay"].active{background:rgba(78,157,232,.15);border-width:2px;}
+.player-palette{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;}
+.pcolor-btn{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',monospace;font-size:9px;font-weight:700;letter-spacing:.5px;transition:all .15s;flex-shrink:0;}
+.pcolor-btn:hover{transform:scale(1.1);}
+.pcolor-btn.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3);}
+.pcolor-btn[data-pos="WR"]{background:var(--col-wr);color:#000;}
+.pcolor-btn[data-pos="RB"]{background:var(--col-rb);color:#000;}
+.pcolor-btn[data-pos="TE"]{background:var(--col-te);color:#fff;}
+.pcolor-btn[data-pos="OL"]{background:var(--col-ol);color:#000;}
+.pcolor-btn[data-pos="QB"]{background:var(--col-qb);color:#000;}
+
+/* ── VIDEO AREA ──
+   The video area is a plain grid cell. The video fills it with object-fit:contain.
+   The Fabric canvas is an absolutely-positioned overlay that we size/place
+   to exactly match the rendered video pixels — recomputed on every resize.
+   No resize handle, no scrolling, no padding that could misalign things.
+*/
+#video-area{
+  grid-row:1; grid-column:2;
+  position:relative; background:#000;
+  overflow:hidden;
+  /* video-controls sits at the bottom inside here */
+  display:flex; flex-direction:column;
+}
+#main-video{
+  width:100%; height:100%;
+  object-fit:contain;
+  display:none; pointer-events:none;
+  flex:1; min-height:0;
+}
+/* Load prompt */
+#load-prompt{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; z-index:20; background:#000;
+}
+#load-prompt label{padding:10px 28px;background:var(--accent);color:#000;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:4px;border-radius:3px;}
+#load-prompt label:hover{background:#f5c85c;}
+#load-prompt p{color:var(--text-dim);font-size:11px;font-family:'JetBrains Mono',monospace;}
+
+/* The Fabric canvas wrapper — sits absolutely over the video render area.
+   We set left/top/width/height via JS to match the letterbox/pillarbox rect. */
+#fabric-wrap{
+  position:absolute;
+  pointer-events:none; /* container is transparent; only upper canvas gets events */
+  z-index:10;
+}
+#fabric-wrap canvas{ position:absolute; top:0; left:0; }
+
+/* Tool hint bar — thin strip at the very bottom of the video area */
+#tool-hint-bar{
+  flex-shrink:0; height:24px;
+  display:flex; align-items:center; gap:8px; padding:0 10px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim);
+  background:var(--bg-panel); border-top:1px solid var(--border); z-index:15;
+}
+#tool-hint-bar b{color:var(--accent);}
+
+/* ── VIDEO CONTROLS ── */
+#video-controls{
+  flex-shrink:0;
+  background:var(--bg-panel); border-top:1px solid var(--border);
+  padding:8px 14px 10px; display:flex; flex-direction:column; gap:6px;
+  z-index:15;
+}
+#scrubber-wrap{display:flex;align-items:center;gap:10px;}
+#scrubber{flex:1;-webkit-appearance:none;height:4px;background:var(--border-bright);border-radius:2px;cursor:pointer;outline:none;}
+#scrubber::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+#time-display{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);min-width:115px;text-align:right;white-space:nowrap;}
+#playback-btns{display:flex;gap:6px;align-items:center;}
+.ctrl-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--text-primary);cursor:pointer;width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.ctrl-btn:hover{background:rgba(255,255,255,.18);}
+.ctrl-btn.play-btn{width:40px;height:40px;background:var(--accent);border-color:var(--accent);color:#000;}
+.ctrl-btn.play-btn:hover{background:#f5c85c;}
+#fps-info{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-left:auto;}
+
+/* ── TIMELINE ── */
+#timeline-panel{grid-row:1/3;grid-column:3;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+#tl-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#tl-header h2{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;}
+#tl-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+#tl-list{flex:1;overflow-y:auto;padding:6px;}
+#tl-list::-webkit-scrollbar{width:4px;}
+#tl-list::-webkit-scrollbar-track{background:var(--bg-deep);}
+#tl-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px;}
+.tl-item{padding:8px 10px;margin-bottom:4px;background:var(--bg-card);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .15s;border-left:3px solid transparent;}
+.tl-item:hover{background:var(--bg-hover);}
+.tl-item.selected{background:var(--bg-hover);border-color:var(--border-bright);}
+.tl-item.play-item{border-left-color:var(--play-color);}
+.tl-item.event-item{border-left-color:var(--event-color);}
+.tl-item.selected.play-item{box-shadow:0 0 0 1px var(--play-color);}
+.tl-item.selected.event-item{box-shadow:0 0 0 1px var(--event-color);}
+.ti-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.ti-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);}
+.ti-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 5px;border-radius:2px;text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.badge-play{background:rgba(232,184,75,.18);color:var(--play-color);border:1px solid rgba(232,184,75,.3);}
+.badge-event{background:rgba(78,157,232,.18);color:var(--event-color);border:1px solid rgba(78,157,232,.3);}
+.ti-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-primary);}
+.ti-meta{font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4;}
+.ti-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;}
+.ttag{font-size:9px;padding:1px 5px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-weight:600;text-transform:uppercase;}
+.tag-off{background:rgba(232,184,75,.15);color:#e8b84b;border:1px solid rgba(232,184,75,.25);}
+.tag-run{background:rgba(61,186,126,.15);color:#3dba7e;border:1px solid rgba(61,186,126,.25);}
+.tag-pass{background:rgba(78,157,232,.15);color:#4e9de8;border:1px solid rgba(78,157,232,.25);}
+.tag-neg{background:rgba(224,82,82,.2);color:#e05252;border:1px solid rgba(224,82,82,.3);}
+.tag-to{background:rgba(224,82,82,.3);color:#f87171;border:1px solid rgba(224,82,82,.4);}
+.tl-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text-dim);text-align:center;padding:20px;}
+.tl-empty svg{opacity:.25;width:40px;height:40px;}
+
+/* ── BOTTOM / PARAMS PANEL ── */
+#bottom-panel{grid-row:2;grid-column:1/3;background:var(--bg-panel);border-top:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+#bp-drag-handle{height:6px;cursor:ns-resize;background:var(--bg-panel);border-top:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+#bp-drag-handle:hover{background:var(--bg-hover);}
+#bp-drag-handle::after{content:'';display:block;width:32px;height:2px;background:var(--border-bright);border-radius:2px;}
+#bp-drag-handle:hover::after{background:var(--accent);}
+#bp-header{padding:6px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#bp-header h2{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;color:var(--text-secondary);}
+#sel-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);}
+#params-form{padding:10px 16px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;overflow-y:auto;flex:1;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg>label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;}
+.fg input[type=text]{background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:2px;outline:none;}
+.fg input:focus{border-color:var(--accent);}
+.fg.notes-g{flex:1;min-width:140px;}
+.fg.notes-g textarea{background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:5px 10px;font-family:'Barlow',sans-serif;font-size:12px;border-radius:2px;outline:none;resize:none;height:58px;width:100%;}
+.fg.notes-g textarea:focus{border-color:var(--accent);}
+.rg{display:flex;gap:3px;flex-wrap:wrap;}
+.rb{padding:3px 9px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;border-radius:2px;transition:all .1s;white-space:nowrap;}
+.rb:hover{border-color:var(--border-bright);color:var(--text-primary);}
+.rb.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
+.ci{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+.ci input[type=checkbox]{display:none;}
+.cbox{width:13px;height:13px;border:1px solid var(--border-bright);border-radius:2px;background:var(--bg-card);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.ci:hover .cbox{border-color:var(--accent);}
+.ci input:checked~.cbox::after{content:'✓';font-size:10px;color:#000;font-weight:700;line-height:1;display:block;}
+.ci.ci-neg input:checked~.cbox{background:var(--red);border-color:var(--red);}
+.ci.ci-neg input:checked~.cbox::after{color:#fff;}
+.clabel{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);}
+.ci:hover .clabel{color:var(--text-primary);}
+#no-sel{display:flex;align-items:center;justify-content:center;flex:1;color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;}
+.params-section{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.psec-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;border-left:2px solid var(--accent);padding-left:6px;margin-bottom:2px;}
+.personnel-display{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:4px 8px;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+.pers-chip{display:flex;align-items:center;gap:3px;}
+.pers-dot{width:8px;height:8px;border-radius:50%;}
+.params-div{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;}
+#notif{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:8px 20px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;z-index:1000;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.cat-toggle{display:flex;gap:0;}
+.cat-btn{padding:5px 14px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;transition:all .15s;}
+.cat-btn:first-child{border-radius:3px 0 0 3px;}
+.cat-btn:last-child{border-radius:0 3px 3px 0;border-left:none;}
+.cat-btn:not(:first-child):not(:last-child){border-left:none;}
+.cat-btn:hover{color:var(--text-primary);}
+.cat-btn.active-off{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
+.cat-btn.active-def{background:#4e9de8;border-color:#4e9de8;color:#000;font-weight:700;}
+.cat-btn.active-st{background:#9b72e8;border-color:#9b72e8;color:#fff;font-weight:700;}
+.rb.rb-success.active{background:var(--green);border-color:var(--green);color:#000;}
+.rb.rb-fail.active{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* ── MODALS ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center;}
+.modal-backdrop.hidden{display:none;}
+.modal{background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:6px;padding:24px;min-width:420px;max-width:540px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.modal h3{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:16px;text-transform:uppercase;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-field{display:flex;flex-direction:column;gap:4px;}
+.modal-field.full{grid-column:1/3;}
+.modal-field label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;}
+.modal-field input,.modal-field select,.modal-field textarea{background:var(--bg-card);border:1px solid var(--border-bright);color:var(--text-primary);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:3px;outline:none;width:100%;}
+.modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--accent);}
+.modal-field select option{background:var(--bg-card);}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+/* confirm dialog */
+.confirm-msg{font-family:'Barlow',sans-serif;font-size:14px;color:var(--text-primary);line-height:1.6;margin-bottom:20px;}
+.confirm-msg strong{color:var(--red);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="app-header">
+  <div class="logo">Gridiron Labs <span class="logo-sub">v2.0 · 🏈 Football Scout</span></div>
+  <div class="hdr-actions">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-simple" onclick="setMode('simple')">Simple</button>
+      <button class="mode-btn" id="mode-expert" onclick="setMode('expert')">Expert</button>
+    </div>
+    <button class="btn" onclick="openMatchInfo()" title="Match information">ℹ Match Info</button>
+    <label class="btn" for="vid-input-hdr">📂 Load Video</label>
+    <input type="file" id="vid-input-hdr" accept="video/*" style="display:none">
+    <label class="btn" for="proj-load">📁 Load Project</label>
+    <input type="file" id="proj-load" accept=".json" style="display:none">
+    <button class="btn btn-accent" onclick="saveProject()">💾 Save Project</button>
+  </div>
+</div>
+
+<div id="main-layout">
+
+  <!-- TOOL PANEL -->
+  <div id="tool-panel">
+    <div class="tlabel">Mode</div>
+    <button class="tbtn active" data-t="select" onclick="setTool('select')" title="Select / Move [V]">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-3 7z"/></svg><span>Sel</span>
+    </button>
+    <div class="tsep"></div>
+    <div class="tlabel">Draw</div>
+    <button class="tbtn" data-t="scrimmage" onclick="setTool('scrimmage')" title="Line of Scrimmage [L]">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="9" x2="21" y2="9" stroke-dasharray="2 2" stroke-width="1"/></svg><span>LOS</span>
+    </button>
+    <div class="tsep"></div>
+    <div class="tlabel">Players</div>
+    <div class="player-palette">
+      <button class="pcolor-btn active" data-pos="WR" onclick="setPlayerPos('WR',this)" title="Wide Receiver [1]">WR</button>
+      <button class="pcolor-btn" data-pos="RB" onclick="setPlayerPos('RB',this)" title="Running Back [2]">RB</button>
+      <button class="pcolor-btn" data-pos="TE" onclick="setPlayerPos('TE',this)" title="Tight End [3]">TE</button>
+      <button class="pcolor-btn" data-pos="OL" onclick="setPlayerPos('OL',this)" title="Offensive Line [4]">OL</button>
+      <button class="pcolor-btn" data-pos="QB" onclick="setPlayerPos('QB',this)" title="Quarterback [5]">QB</button>
+    </div>
+    <div class="tsep"></div>
+    <!-- Overlay toggle in toolbar -->
+    <button class="tbtn active" data-t="overlay" onclick="toggleOverlay()" title="Toggle Overlay [O]" id="overlay-tbtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>Ovly</span>
+    </button>
+    <div class="tsep"></div>
+    <button class="tbtn" data-t="delobj" onclick="deleteSelected()" title="Delete selected [Del]">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg><span>Del</span>
+    </button>
+  </div>
+
+  <!-- VIDEO AREA — fixed in grid, no manual resize -->
+  <div id="video-area">
+    <div id="load-prompt">
+      <label for="vid-input-main">▶ LOAD VIDEO FILE</label>
+      <input type="file" id="vid-input-main" accept="video/*" style="display:none">
+      <p>MP4, MOV, WebM — game footage</p>
+    </div>
+    <video id="main-video" playsinline></video>
+    <!-- Fabric canvas wrapper — positioned/sized by JS to match video render rect -->
+    <div id="fabric-wrap"></div>
+    <div id="tool-hint-bar">Active: <b id="hint-text">SELECT — click to select and move objects</b></div>
+    <div id="video-controls">
+      <div id="scrubber-wrap">
+        <input type="range" id="scrubber" min="0" max="100" step="0.001" value="0">
+        <div id="time-display">0:00.000 / 0:00</div>
+      </div>
+      <div id="playback-btns">
+        <button class="ctrl-btn" onclick="frameStep(-15)" title="−15 Frames [Shift+←]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.5 12 10 6v12l8.5-6zM7 6H5v12h2z"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="frameStep(-1)" title="−1 Frame [←]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+        <button class="ctrl-btn play-btn" onclick="togglePlay()" title="Play / Pause [Space]">
+          <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="frameStep(1)" title="+1 Frame [→]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 5-3.5L8.5 5v7zm7.5-6h2v12h-2z"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="frameStep(15)" title="+15 Frames [Shift+→]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5.5 12 14 6v12L5.5 12zM17 6h2v12h-2z"/></svg>
+        </button>
+        <div style="width:1px;background:var(--border);margin:0 2px;align-self:stretch;"></div>
+        <button class="ctrl-btn" onclick="jumpToSelected()" title="Return to selected play/event [R]" style="border-color:var(--accent);color:var(--accent);" id="jump-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+        </button>
+        <div id="fps-info">FPS: ~30</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMELINE PANEL -->
+  <div id="timeline-panel">
+    <div id="tl-header">
+      <h2>PLAYS</h2>
+      <div id="tl-actions">
+        <button class="btn btn-play" onclick="addItem('play')" title="Add Play [P]">+ Play</button>
+        <button class="btn btn-event" onclick="addItem('event')" title="Add Event [E]">+ Event</button>
+        <button class="btn btn-danger" onclick="deleteItem()" title="Delete selected [Del]">✕ Del</button>
+        <button class="btn btn-danger" onclick="clearAllItems()" title="Clear all plays &amp; events">⊘ Clear</button>
+      </div>
+    </div>
+    <div id="tl-list">
+      <div class="tl-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+        <p>Load a video and add plays or events</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM / PARAMS PANEL -->
+  <div id="bottom-panel">
+    <div id="bp-drag-handle"></div>
+    <div id="bp-header">
+      <h2>Parameters</h2>
+      <div id="sel-label">— No Selection —</div>
+    </div>
+    <div id="no-sel">SELECT A PLAY OR EVENT FROM THE TIMELINE</div>
+    <div id="params-form" style="display:none"></div>
+  </div>
+
+</div><!-- end #main-layout -->
+
+<!-- MATCH INFO MODAL -->
+<div class="modal-backdrop hidden" id="match-info-modal" onclick="if(event.target===this)closeMatchInfo()">
+  <div class="modal">
+    <h3>📋 Match Information</h3>
+    <div class="modal-grid">
+      <div class="modal-field"><label>Match Date</label><input type="date" id="mi-date"></div>
+      <div class="modal-field"><label>Competition / League</label><input type="text" id="mi-competition" placeholder="e.g. NFL Week 12"></div>
+      <div class="modal-field"><label>Home Team</label><input type="text" id="mi-home" placeholder="Team name"></div>
+      <div class="modal-field"><label>Away Team</label><input type="text" id="mi-away" placeholder="Team name"></div>
+      <div class="modal-field"><label>Team to Scout</label><input type="text" id="mi-scout" placeholder="Team being analysed"></div>
+      <div class="modal-field"><label>Scout / Analyst</label><input type="text" id="mi-analyst" placeholder="Your name"></div>
+      <div class="modal-field"><label>Venue / Stadium</label><input type="text" id="mi-venue" placeholder="Stadium name"></div>
+      <div class="modal-field"><label>Season</label><input type="text" id="mi-season" placeholder="e.g. 2024–25"></div>
+      <div class="modal-field full"><label>Notes / Context</label><textarea id="mi-notes" rows="3" placeholder="Additional context about this match…" style="resize:vertical;"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeMatchInfo()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveMatchInfo()">✓ Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM CLEAR MODAL -->
+<div class="modal-backdrop hidden" id="confirm-modal">
+  <div class="modal" style="min-width:320px;max-width:400px;">
+    <h3>⚠ Confirm Clear</h3>
+    <div class="confirm-msg">This will permanently delete <strong>all plays and events</strong>. Overlay drawings will also be cleared.<br><br>This cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmClearAll()">⊘ Clear All</button>
+    </div>
+  </div>
+</div>
+
+<div id="notif"></div>
+
+<script>
+// ============================================================
+// STATE
+// overlays[id] = { players:[{pos,xPct,yPct},...], los:{x1Pct,y1Pct,x2Pct,y2Pct}|null }
+// All coords are 0-1 fractions of the Fabric canvas size.
+// Canvas is rebuilt on every resize; objects redrawn from coords.
+// ============================================================
+const S = {
+  items:[], params:{}, overlays:{},
+  selectedId:null, tool:'select', playerPos:'WR',
+  fps:30, videoLoaded:false,
+  projectId:'project_'+Date.now(), videoName:null,
+  mode:'simple',
+  matchInfo:{
+    date:'', competition:'', home:'', away:'',
+    scout:'', analyst:'', venue:'', season:'', notes:''
+  },
+};
+
+const PLAYER_COLORS = {WR:'#f87171',RB:'#34d399',TE:'#a78bfa',OL:'#94a3b8',QB:'#fbbf24'};
+const TOOL_HINTS = {
+  select:'SELECT — click to select / drag to move',
+  scrimmage:'LINE OF SCRIMMAGE — drag to draw, then drag endpoints to adjust',
+  player:'PLAYER — click on the video to place a dot',
+  delobj:'DELETE — click an object to remove it',
+};
+
+function emptyOverlay(){ return {players:[], los:null}; }
+function getOverlay(id){ if(!S.overlays[id]) S.overlays[id]=emptyOverlay(); return S.overlays[id]; }
+function toRel(px,py){ return {xPct:px/fc.width, yPct:py/fc.height}; }
+function toPx(xPct,yPct){ return {x:xPct*fc.width, y:yPct*fc.height}; }
+
+// ============================================================
+// FABRIC CANVAS
+// ============================================================
+let fc = null;
+let rawCanvas = null;     // fc.upperCanvasEl — where mouse events fire
+let isDrawing = false;
+let drawObj = null;
+let dragHandle = null;
+let lineHandles = [];
+let overlayVisible = true;
+
+// videoRect: the actual pixel rectangle of the rendered video image inside #video-area
+// This is computed once in buildFabric() and used to correctly translate mouse events.
+let videoRect = {left:0, top:0, width:640, height:360};
+
+function buildFabric() {
+  // ── 1. Tear down old instance ──────────────────────────────
+  if (fc) {
+    try {
+      if (rawCanvas) {
+        rawCanvas.removeEventListener('mousedown', onRawDown);
+        rawCanvas.removeEventListener('mousemove', onRawMove);
+        rawCanvas.removeEventListener('mouseup',   onRawUp);
+      }
+      fc.dispose();
+    } catch(e){}
+    fc = null; rawCanvas = null;
+  }
+
+  // ── 2. Compute video render rect ───────────────────────────
+  // #video-area contains the <video> which uses object-fit:contain.
+  // We need to know where the actual image pixels are, accounting for
+  // the fixed controls at the bottom (hint bar + video-controls).
+  const vid    = document.getElementById('main-video');
+  const area   = document.getElementById('video-area');
+  const hint   = document.getElementById('tool-hint-bar');
+  const ctrl   = document.getElementById('video-controls');
+
+  const areaW  = area.clientWidth;
+  const areaH  = area.clientHeight;
+  const fixedH = hint.offsetHeight + ctrl.offsetHeight;
+  const videoContainerH = areaH - fixedH;   // available height for actual video image
+
+  const vidW = vid.videoWidth  || 1280;
+  const vidH = vid.videoHeight || 720;
+  const vidR = vidW / vidH;
+  const boxR = areaW / videoContainerH;
+
+  let vW, vH, vX, vY;
+  if (vidR > boxR) {
+    // letterbox (black bars top/bottom)
+    vW = areaW;
+    vH = areaW / vidR;
+    vX = 0;
+    vY = (videoContainerH - vH) / 2;
+  } else {
+    // pillarbox (black bars left/right)
+    vH = videoContainerH;
+    vW = videoContainerH * vidR;
+    vX = (areaW - vW) / 2;
+    vY = 0;
+  }
+
+  // Store absolute rect of video image within the page (used for mouse coord calc)
+  const areaRect = area.getBoundingClientRect();
+  videoRect = {
+    left:  areaRect.left + vX,
+    top:   areaRect.top  + vY,
+    width: vW,
+    height: vH,
+  };
+
+  // ── 3. Create/position the canvas wrapper ──────────────────
+  const wrap = document.getElementById('fabric-wrap');
+  wrap.style.left   = vX + 'px';
+  wrap.style.top    = vY + 'px';
+  wrap.style.width  = vW + 'px';
+  wrap.style.height = vH + 'px';
+
+  // Create a fresh <canvas> element inside the wrapper
+  // (Fabric.js replaces the element; we always create a new one)
+  wrap.innerHTML = '<canvas id="draw-canvas"></canvas>';
+  const el = document.getElementById('draw-canvas');
+  el.width  = vW;
+  el.height = vH;
+  el.style.position = 'absolute';
+  el.style.left = '0';
+  el.style.top  = '0';
+
+  // ── 4. Initialise Fabric ───────────────────────────────────
+  fc = new fabric.Canvas('draw-canvas', {selection:true, stopContextMenu:true});
+  fc.setWidth(vW);
+  fc.setHeight(vH);
+
+  // Fabric inserts an upper canvas on top of the lower canvas; get reference
+  rawCanvas = fc.upperCanvasEl;
+  rawCanvas.style.position = 'absolute';
+  rawCanvas.style.left = '0';
+  rawCanvas.style.top  = '0';
+  rawCanvas.style.pointerEvents = 'all';
+
+  rawCanvas.addEventListener('mousedown', onRawDown);
+  rawCanvas.addEventListener('mousemove', onRawMove);
+  rawCanvas.addEventListener('mouseup',   onRawUp);
+
+  fc.on('object:modified',   onFabricModified);
+  fc.on('selection:created', onFabricSel);
+  fc.on('selection:updated', onFabricSel);
+  fc.on('selection:cleared', ()=>clearLineHandles());
+
+  // Apply overlay visibility
+  // (objects not added yet; visibility applied in redrawOverlay)
+}
+
+// ── Sync canvas to video (called on load + every resize) ──────
+function syncCanvas() {
+  buildFabric();
+  if (S.selectedId) redrawOverlay(S.selectedId);
+  setTool(S.tool);
+}
+
+// ── Translate a mouse event (from rawCanvas) to canvas coords ─
+// rawCanvas sits inside #fabric-wrap which is positioned at (vX,vY)
+// within #video-area. Since rawCanvas fills the wrap exactly,
+// clientX - rawCanvas.getBoundingClientRect().left gives correct coords.
+function canvasPt(e) {
+  const r = rawCanvas.getBoundingClientRect();
+  return {x: e.clientX - r.left, y: e.clientY - r.top};
+}
+
+// ============================================================
+// DATA → FABRIC (redraw)
+// ============================================================
+function redrawOverlay(id) {
+  if (!fc) return;
+  dragHandle = null;
+  clearLineHandles();
+  fc.clear();
+
+  const ov = getOverlay(id);
+
+  // Draw LOS line
+  if (ov.los) {
+    const p1 = toPx(ov.los.x1Pct, ov.los.y1Pct);
+    const p2 = toPx(ov.los.x2Pct, ov.los.y2Pct);
+    const cx = (p1.x+p2.x)/2, cy = (p1.y+p2.y)/2;
+    const line = new fabric.Line([0,0,0,0], {
+      stroke:'#e8b84b', strokeWidth:2.5, strokeDashArray:[6,4],
+      selectable:true, evented:true, tag:'scrimmage',
+      hasControls:false, hasBorders:true,
+    });
+    line.set({x1:p1.x-cx, y1:p1.y-cy, x2:p2.x-cx, y2:p2.y-cy, left:cx, top:cy});
+    line.setCoords();
+    fc.add(line);
+  }
+
+  // Draw player groups
+  ov.players.forEach((pl, idx) => {
+    const pix = toPx(pl.xPct, pl.yPct);
+    fc.add(makePlayerGroup(pl.pos, pix.x, pix.y, idx));
+  });
+
+  applySelectability();
+
+  // Apply visibility
+  if (!overlayVisible) fc.getObjects().forEach(o=>o.set('visible',false));
+  fc.renderAll();
+  updatePersonnelCount();
+}
+
+function makePlayerGroup(pos, cx, cy, idx) {
+  const col = PLAYER_COLORS[pos];
+  const R = 11;
+  const circle = new fabric.Circle({
+    radius:R, fill:col+'44', stroke:col, strokeWidth:2.5,
+    originX:'center', originY:'center', left:0, top:0,
+  });
+  const lbl = new fabric.Text(pos, {
+    fontSize:8, fontFamily:'Barlow Condensed', fontWeight:'700',
+    fill:col, originX:'center', originY:'center', left:0, top:0,
+  });
+  return new fabric.Group([circle, lbl], {
+    left: cx - R, top: cy - R,
+    hasControls:false, hasBorders:true,
+    selectable:true, evented:true,
+    _isPlayerGroup:true, _playerIdx:idx,
+  });
+}
+
+// ============================================================
+// FABRIC → DATA (save back to overlay)
+// ============================================================
+function onFabricModified(opt) {
+  if (!S.selectedId || !opt.target) return;
+  const obj = opt.target;
+  if (obj._isPlayerGroup && obj._playerIdx !== undefined) {
+    const ov = getOverlay(S.selectedId);
+    // Group top-left + half dimensions = centre
+    const cx = obj.left + (obj.width  * (obj.scaleX||1)) / 2;
+    const cy = obj.top  + (obj.height * (obj.scaleY||1)) / 2;
+    const r  = toRel(cx, cy);
+    ov.players[obj._playerIdx].xPct = r.xPct;
+    ov.players[obj._playerIdx].yPct = r.yPct;
+    updatePersonnelCount();
+  }
+  if (obj.tag === 'scrimmage') saveLosFromObj(obj);
+}
+
+function saveLosFromObj(lineObj) {
+  if (!S.selectedId) return;
+  const m  = lineObj.calcTransformMatrix();
+  const p1 = fabric.util.transformPoint({x:lineObj.x1,y:lineObj.y1},m);
+  const p2 = fabric.util.transformPoint({x:lineObj.x2,y:lineObj.y2},m);
+  const ov = getOverlay(S.selectedId);
+  ov.los = {x1Pct:p1.x/fc.width, y1Pct:p1.y/fc.height, x2Pct:p2.x/fc.width, y2Pct:p2.y/fc.height};
+}
+
+// ============================================================
+// SELECTION & LINE HANDLES
+// ============================================================
+function applySelectability() {
+  if (!fc) return;
+  const sel = S.tool === 'select';
+  fc.getObjects().forEach(o => {
+    if (o._isHandle) return;
+    o.selectable = sel;
+    o.evented    = sel;
+  });
+}
+
+function onFabricSel() {
+  clearLineHandles();
+  if (S.tool !== 'select') return;
+  const obj = fc.getActiveObject();
+  if (obj && obj.tag === 'scrimmage') showLineHandles(obj);
+}
+
+function getLineAbs(line) {
+  const m  = line.calcTransformMatrix();
+  const p1 = fabric.util.transformPoint({x:line.x1,y:line.y1},m);
+  const p2 = fabric.util.transformPoint({x:line.x2,y:line.y2},m);
+  return {x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y};
+}
+
+function showLineHandles(lineObj) {
+  const c = getLineAbs(lineObj);
+  const makeH = (x,y,which) => {
+    const h = new fabric.Circle({
+      left:x-7, top:y-7, radius:7,
+      fill:'rgba(255,255,255,.9)', stroke:'#e8b84b', strokeWidth:2,
+      selectable:false, evented:true, hoverCursor:'grab',
+      _isHandle:true, _lineRef:lineObj, _which:which,
+    });
+    h.on('mousedown', startHandleDrag);
+    return h;
+  };
+  lineHandles = [makeH(c.x1,c.y1,'p1'), makeH(c.x2,c.y2,'p2')];
+  lineHandles.forEach(h => fc.add(h));
+  fc.renderAll();
+}
+
+function clearLineHandles() {
+  lineHandles.forEach(h=>{ try{fc&&fc.remove(h);}catch(e){} });
+  lineHandles = []; dragHandle = null;
+  if (fc) fc.renderAll();
+}
+
+function startHandleDrag(opt) {
+  const h = opt.target;
+  dragHandle = {
+    handleObj:h, lineObj:h._lineRef, which:h._which,
+    origAbs:getLineAbs(h._lineRef),
+    otherHandle:lineHandles.find(l=>l!==h),
+  };
+  rawCanvas.style.cursor = 'grabbing';
+  opt.e.stopPropagation(); opt.e.preventDefault();
+}
+
+// ============================================================
+// RAW MOUSE EVENTS
+// ============================================================
+function onRawDown(e) {
+  const tool = S.tool;
+  if (tool==='select' || tool==='delobj') return;
+  clearLineHandles();
+  fc.discardActiveObject();
+  e.stopPropagation();
+  const p = canvasPt(e);
+
+  if (tool==='player') {
+    if (!S.selectedId) { notify('Select a play first'); return; }
+    const ov  = getOverlay(S.selectedId);
+    const rel = toRel(p.x, p.y);
+    const idx = ov.players.length;
+    ov.players.push({pos:S.playerPos, xPct:rel.xPct, yPct:rel.yPct});
+    const grp = makePlayerGroup(S.playerPos, p.x, p.y, idx);
+    grp.selectable = false; grp.evented = false;
+    if (!overlayVisible) grp.set('visible', false);
+    fc.add(grp); fc.renderAll();
+    updatePersonnelCount();
+    return;
+  }
+
+  if (tool==='scrimmage') {
+    isDrawing = true;
+    drawObj = new fabric.Line([p.x,p.y,p.x,p.y], {
+      stroke:'#e8b84b', strokeWidth:2.5, strokeDashArray:[6,4],
+      selectable:false, evented:false, tag:'scrimmage',
+      hasControls:false, hasBorders:false,
+    });
+    if (!overlayVisible) drawObj.set('visible', false);
+    fc.add(drawObj); fc.renderAll();
+  }
+}
+
+function onRawMove(e) {
+  if (dragHandle) {
+    const p = canvasPt(e);
+    const {lineObj,which,handleObj,otherHandle,origAbs} = dragHandle;
+    handleObj.set({left:p.x-7, top:p.y-7});
+    let ax1,ay1,ax2,ay2;
+    if (which==='p1'){ax1=p.x;ay1=p.y;ax2=origAbs.x2;ay2=origAbs.y2;}
+    else             {ax1=origAbs.x1;ay1=origAbs.y1;ax2=p.x;ay2=p.y;}
+    const cx=(ax1+ax2)/2, cy=(ay1+ay2)/2;
+    lineObj.set({x1:ax1-cx,y1:ay1-cy,x2:ax2-cx,y2:ay2-cy,left:cx,top:cy});
+    lineObj.setCoords();
+    dragHandle.origAbs = {x1:ax1,y1:ay1,x2:ax2,y2:ay2};
+    if (otherHandle){const ox=which==='p1'?ax2:ax1,oy=which==='p1'?ay2:ay1;otherHandle.set({left:ox-7,top:oy-7});}
+    saveLosFromObj(lineObj);
+    fc.renderAll(); return;
+  }
+  if (!isDrawing || !drawObj) return;
+  const p = canvasPt(e);
+  drawObj.set({x2:p.x, y2:p.y});
+  fc.renderAll();
+}
+
+function onRawUp(e) {
+  if (dragHandle) { dragHandle=null; rawCanvas.style.cursor='default'; return; }
+  if (!isDrawing || !drawObj) return;
+  isDrawing = false;
+  if (Math.hypot(drawObj.x2-drawObj.x1, drawObj.y2-drawObj.y1) < 5) {
+    fc.remove(drawObj); drawObj=null; fc.renderAll(); return;
+  }
+  if (S.selectedId) {
+    const ov = getOverlay(S.selectedId);
+    ov.los = {
+      x1Pct:drawObj.x1/fc.width,  y1Pct:drawObj.y1/fc.height,
+      x2Pct:drawObj.x2/fc.width,  y2Pct:drawObj.y2/fc.height,
+    };
+    drawObj = null;
+    redrawOverlay(S.selectedId);   // redraw so LOS becomes selectable
+  } else {
+    fc.remove(drawObj); drawObj=null; fc.renderAll();
+  }
+}
+
+function toggleOverlay() {
+  overlayVisible = !overlayVisible;
+  if (fc) { fc.getObjects().forEach(o=>o.set('visible',overlayVisible)); fc.renderAll(); }
+  const btn = document.getElementById('overlay-tbtn');
+  btn.classList.toggle('active', overlayVisible);
+  btn.title = overlayVisible ? 'Hide Overlay [O]' : 'Show Overlay [O]';
+  btn.querySelector('svg').style.opacity = overlayVisible ? '1' : '0.4';
+}
+
+function setTool(tool) {
+  S.tool = tool;
+  document.querySelectorAll('.tbtn[data-t]').forEach(b => {
+    if (b.dataset.t === 'overlay') return; // managed separately
+    b.classList.remove('active');
+  });
+  const btn = document.querySelector(`.tbtn[data-t="${tool}"]`);
+  if (btn) btn.classList.add('active');
+  document.getElementById('hint-text').textContent = TOOL_HINTS[tool] || TOOL_HINTS.player;
+  if (!fc) return;
+  fc.isDrawingMode = false;
+  if (tool==='select') {
+    fc.selection = true; applySelectability();
+    if (rawCanvas) rawCanvas.style.cursor = 'default';
+  } else {
+    fc.selection = false; clearLineHandles(); fc.discardActiveObject(); applySelectability();
+    if (rawCanvas) rawCanvas.style.cursor = 'crosshair';
+  }
+  fc.renderAll();
+}
+
+function setPlayerPos(pos, btn) {
+  S.playerPos = pos; S.tool = 'player';
+  document.querySelectorAll('.pcolor-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tbtn[data-t]:not([data-t="overlay"])').forEach(b=>b.classList.remove('active'));
+  document.getElementById('hint-text').textContent = TOOL_HINTS.player;
+  if (fc) { fc.selection=false; applySelectability(); if(rawCanvas) rawCanvas.style.cursor='crosshair'; fc.renderAll(); }
+}
+
+function deleteSelected() {
+  if (!fc || !S.selectedId) return;
+  const obj = fc.getActiveObject();
+  if (!obj) return;
+  const ov = getOverlay(S.selectedId);
+  if (obj._isPlayerGroup && obj._playerIdx !== undefined) {
+    ov.players.splice(obj._playerIdx, 1);
+    redrawOverlay(S.selectedId); renderTimeline(); return;
+  }
+  if (obj.tag==='scrimmage') {
+    ov.los = null; fc.remove(obj); clearLineHandles(); fc.renderAll(); return;
+  }
+  fc.remove(obj); fc.discardActiveObject(); fc.renderAll();
+}
+
+function updatePersonnelCount() {
+  if (!S.selectedId) return;
+  const ov = getOverlay(S.selectedId);
+  const counts = {WR:0,RB:0,TE:0,OL:0,QB:0};
+  (ov.players||[]).forEach(pl=>{ if(counts[pl.pos]!==undefined) counts[pl.pos]++; });
+  if (S.params[S.selectedId]) {
+    S.params[S.selectedId]._wrCount = counts.WR;
+    S.params[S.selectedId]._rbCount = counts.RB;
+    S.params[S.selectedId]._teCount = counts.TE;
+    S.params[S.selectedId]._olCount = counts.OL;
+    S.params[S.selectedId]._qbCount = counts.QB;
+  }
+  const pd = document.getElementById('personnel-auto');
+  if (pd) {
+    const total = Object.values(counts).reduce((a,b)=>a+b,0);
+    pd.innerHTML = Object.entries(counts).map(([pos,cnt])=>
+      cnt>0?`<span class="pers-chip"><span class="pers-dot" style="background:${PLAYER_COLORS[pos]}"></span><span style="color:${PLAYER_COLORS[pos]}">${pos}×${cnt}</span></span>`:''
+    ).join('') + (total?`<span style="color:var(--text-dim);margin-left:4px;">${total} total</span>`:'<span style="color:var(--text-dim)">No players placed</span>');
+  }
+  renderTimeline();
+}
+
+// ============================================================
+// VIDEO
+// ============================================================
+const video   = document.getElementById('main-video');
+const scrubber= document.getElementById('scrubber');
+
+function initVideo(src) {
+  video.src = src;
+  video.style.display = 'block';
+  document.getElementById('load-prompt').style.display = 'none';
+  S.videoLoaded = true;
+  video.addEventListener('loadedmetadata', ()=>{ scrubber.max=video.duration; updateTime(); syncCanvas(); }, {once:true});
+  video.addEventListener('timeupdate',     ()=>{ if(!scrubber._drag) scrubber.value=video.currentTime; updateTime(); });
+  video.addEventListener('pause', ()=>{ document.getElementById('play-icon').innerHTML='<path d="M8 5v14l11-7z"/>'; });
+  video.addEventListener('play',  ()=>{ document.getElementById('play-icon').innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'; });
+}
+function updateTime(){ document.getElementById('time-display').textContent=`${fmt(video.currentTime)} / ${fmt(video.duration||0)}`; }
+function togglePlay(){ if(S.videoLoaded){ video.paused?video.play():video.pause(); } }
+function frameStep(d){ if(!S.videoLoaded) return; video.pause(); video.currentTime=Math.max(0,Math.min(video.duration||0,video.currentTime+d/S.fps)); }
+
+function jumpToSelected() {
+  if (!S.videoLoaded) return;
+  if (!S.selectedId) { notify('No play selected'); return; }
+  const item = S.items.find(i=>i.id===S.selectedId);
+  if (!item) return;
+  video.pause();
+  video.currentTime = item.t;
+  notify(`↩ Returned to ${item.kind} @ ${fmt(item.t)}`);
+}
+
+scrubber.addEventListener('mousedown',()=>{scrubber._drag=true;});
+scrubber.addEventListener('input',()=>{ if(S.videoLoaded) video.currentTime=+scrubber.value; });
+scrubber.addEventListener('mouseup',()=>{scrubber._drag=false;});
+
+[document.getElementById('vid-input-main'),document.getElementById('vid-input-hdr')].forEach(el=>{
+  el.addEventListener('change',e=>{
+    const f=e.target.files[0]; if(!f) return;
+    S.videoName=f.name; initVideo(URL.createObjectURL(f)); notify('Video loaded: '+f.name);
+  });
+});
+
+// ── ResizeObserver: resync whenever #video-area changes size ──
+// This fires when the window resizes OR the bottom panel is dragged.
+window.addEventListener('load', ()=>{
+  if (window.ResizeObserver) {
+    new ResizeObserver(()=>{ if(S.videoLoaded) syncCanvas(); })
+      .observe(document.getElementById('video-area'));
+  } else {
+    window.addEventListener('resize', ()=>{ if(S.videoLoaded) setTimeout(syncCanvas,50); });
+  }
+});
+
+// ============================================================
+// TIMELINE ITEMS
+// ============================================================
+function addItem(kind) {
+  if (!S.videoLoaded){ notify('Load a video first!'); return; }
+  const id = kind+'_'+Math.random().toString(36).substr(2,8);
+  const t  = video.currentTime;
+  S.items.push({id,kind,t,frame:Math.round(t*S.fps)});
+  S.items.sort((a,b)=>a.t-b.t);
+  S.params[id] = kind==='play'
+    ? {notes:'',category:'Offensive',quarter:'Q1',down:'1',ytg:'Medium',
+       fieldPos:'Own territory',hash:'Middle',
+       qbAlign:'Shotgun',receiverDist:'Balanced',backfield:'Singleback',
+       motion:'None',shift:'None',
+       playType:'Pass',runConcept:'',passDepth:'Short (0–10)',passType:'Dropback',
+       direction:'Middle',target:'',yardGain:'',yardCat:'',success:'',
+       negEvents:[],turnover:'None',
+       _wrCount:0,_rbCount:0,_teCount:0,_olCount:0,_qbCount:0}
+    : {notes:'',label:'',player:''};
+  S.overlays[id] = emptyOverlay();
+  renderTimeline(); selectItem(id);
+  notify(`${kind.toUpperCase()} added @ ${fmt(t)}`);
+}
+
+function deleteItem() {
+  if (!S.selectedId){ notify('No item selected'); return; }
+  const id = S.selectedId;
+  S.items  = S.items.filter(i=>i.id!==id);
+  delete S.params[id]; delete S.overlays[id];
+  S.selectedId = null;
+  if (fc){ fc.clear(); fc.renderAll(); }
+  renderTimeline(); renderParams(); notify('Item deleted');
+}
+
+function selectItem(id) {
+  S.selectedId = id;
+  const item = S.items.find(i=>i.id===id); if(!item) return;
+  if (S.videoLoaded) video.currentTime = item.t;
+  if (!S.overlays[id]) S.overlays[id] = emptyOverlay();
+  renderTimeline();
+  if (fc) redrawOverlay(id);
+  renderParams();
+}
+
+function renderTimeline() {
+  const list = document.getElementById('tl-list');
+  if (!S.items.length) {
+    list.innerHTML=`<div class="tl-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><p>Add plays or events above</p></div>`;
+    return;
+  }
+  list.innerHTML = S.items.map(item=>{
+    const p=S.params[item.id]||{};
+    let meta='', tags='';
+    if (item.kind==='play') {
+      const wr=p._wrCount||0,rb=p._rbCount||0,te=p._teCount||0;
+      meta=`${p.quarter||'?'} · ${p.down?p.down+'&':''} · ${p.ytg||'?'}`;
+      if(p.fieldPos) meta+=` · ${p.fieldPos}`;
+      const pcat=p.playType||'';
+      const cc=pcat==='Run'||pcat==='QB run'?'tag-run':pcat==='Pass'||pcat==='RPO'?'tag-pass':'tag-off';
+      tags+=`<span class="ttag tag-off">${p.category||'OFF'}</span>`;
+      if(pcat) tags+=`<span class="ttag ${cc}">${pcat}</span>`;
+      if((p.negEvents||[]).length) tags+=`<span class="ttag tag-neg">⚠ ${p.negEvents.length}</span>`;
+      if(p.turnover&&p.turnover!=='None') tags+=`<span class="ttag tag-to">TO</span>`;
+      if(wr||rb||te) tags+=`<span class="ttag" style="background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2);">${wr>0?wr+'WR ':''}${rb>0?rb+'RB ':''}${te>0?te+'TE':''}</span>`;
+    } else {
+      meta=p.label||'Event'; if(p.player) meta+=' · '+p.player;
+    }
+    return `<div class="tl-item ${item.kind}-item ${S.selectedId===item.id?'selected':''}" onclick="selectItem('${item.id}')">
+      <div class="ti-top"><span class="ti-id">#${item.id.split('_')[1]}</span><span class="ti-badge badge-${item.kind}">${item.kind}</span></div>
+      <div class="ti-time">${fmt(item.t)} · fr.${item.frame}</div>
+      <div class="ti-meta">${meta}</div>
+      ${tags?`<div class="ti-tags">${tags}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// PARAMS FORM
+// ============================================================
+function rg(key,options){
+  const p=S.params[S.selectedId]||{}, val=p[key];
+  return `<div class="rg">${options.map(o=>`<button class="rb ${val===o?'active':''}" onclick="setParam('${key}','${o}',this)">${o}</button>`).join('')}</div>`;
+}
+function fgRg(label,key,options){ return `<div class="fg"><label>${label}</label>${rg(key,options)}</div>`; }
+
+function renderParams() {
+  const form  = document.getElementById('params-form');
+  const noSel = document.getElementById('no-sel');
+  const lbl   = document.getElementById('sel-label');
+  if (!S.selectedId){ form.style.display='none'; noSel.style.display='flex'; lbl.textContent='— No Selection —'; return; }
+  const item = S.items.find(i=>i.id===S.selectedId); if(!item) return;
+  const p    = S.params[S.selectedId];
+  lbl.textContent = `${item.kind.toUpperCase()} · ${fmt(item.t)}`;
+  noSel.style.display='none'; form.style.display='flex';
+
+  if (item.kind==='event') {
+    form.innerHTML=`
+      <div class="fg"><label>Event Label</label><input type="text" value="${p.label||''}" oninput="setParamD('label',this.value)" placeholder="e.g. kickoff, penalty…" style="min-width:160px"></div>
+      <div class="fg"><label>Player</label><input type="text" value="${p.player||''}" oninput="setParamD('player',this.value)" placeholder="name / number…" style="min-width:120px"></div>
+      <div class="fg notes-g"><label>Notes</label><textarea oninput="setParamD('notes',this.value)">${p.notes||''}</textarea></div>`;
+    return;
+  }
+
+  const expert = S.mode==='expert';
+  const cat    = p.category||'Offensive';
+
+  if (cat!=='Offensive') {
+    form.innerHTML=`
+      <div class="params-section">
+        <div class="psec-title">Category</div>
+        <div class="fg"><label>Play Category</label>
+          <div class="cat-toggle">
+            <button class="cat-btn ${cat==='Offensive'?'active-off':''}" onclick="setCategory('Offensive')">Offensive</button>
+            <button class="cat-btn ${cat==='Defensive'?'active-def':''}" onclick="setCategory('Defensive')">Defensive</button>
+            <button class="cat-btn ${cat==='Special'?'active-st':''}" onclick="setCategory('Special')">Special</button>
+          </div>
+        </div>
+      </div>
+      <div style="padding:20px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px;">${cat.toUpperCase()} parameters — coming in a future version.</div>
+      <div class="fg notes-g"><label>Notes</label><textarea oninput="setParamD('notes',this.value)">${p.notes||''}</textarea></div>`;
+    return;
+  }
+
+  const negList=['Sack','Tackle for loss','QB hit','Pressure','Penalty offense','Penalty defense'];
+  const negChecks=negList.map(n=>`<label class="ci ci-neg"><input type="checkbox" ${(p.negEvents||[]).includes(n)?'checked':''} onchange="toggleNeg('${n}',this.checked)"><div class="cbox"></div><span class="clabel">${n}</span></label>`).join('');
+  const playTypeOpts = expert?['Run','Pass','QB run','RPO']:['Run','Pass','QB run'];
+  const isRun    = p.playType==='Run' || p.playType==='QB run';
+  const isRPO    = p.playType==='RPO';
+  const isPass   = p.playType==='Pass' || isRPO;
+  const showRunConcept  = expert && (isRun || isRPO);
+  const showPassDepth   = isPass || isRPO;
+  const showPassExtended= expert && showPassDepth;
+
+  form.innerHTML=`
+    <div class="params-section">
+      <div class="psec-title">Category</div>
+      <div class="fg"><label>Play Category</label>
+        <div class="cat-toggle">
+          <button class="cat-btn active-off" onclick="setCategory('Offensive')">Offensive</button>
+          <button class="cat-btn" onclick="setCategory('Defensive')">Defensive</button>
+          <button class="cat-btn" onclick="setCategory('Special')">Special</button>
+        </div>
+      </div>
+    </div>
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Game Context</div>
+      ${fgRg('Quarter','quarter',['Q1','Q2','Q3','Q4','OT'])}
+      ${fgRg('Down','down',['1','2','3','4'])}
+      ${fgRg('Yards to Go','ytg',['Short (1–3)','Medium (4–6)','Long (7+)'])}
+      ${fgRg('Field Position','fieldPos',['Own territory','Midfield','Opponent territory','Red zone'])}
+      ${fgRg('Hash / Side','hash',['Left hash','Middle','Right hash'])}
+    </div>
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Personnel</div>
+      <div class="fg"><label>Players on Canvas</label><div class="personnel-display" id="personnel-auto"><span style="color:var(--text-dim)">No players placed</span></div></div>
+      <div style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;line-height:1.5;max-width:180px;">Place colored dots on the video using the left panel. Count auto-detects.</div>
+    </div>
+    ${expert?`
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Formation</div>
+      ${fgRg('QB Alignment','qbAlign',['Under center','Shotgun','Pistol'])}
+      ${fgRg('Receiver Dist.','receiverDist',['Balanced','Trips left','Trips right','Bunch','Empty'])}
+      ${fgRg('Backfield','backfield',['Singleback','I-formation','Split backs','Empty'])}
+    </div>
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Motion / Shift</div>
+      ${fgRg('Motion','motion',['None','Jet motion','Orbit motion','Short motion'])}
+      ${fgRg('Shift','shift',['None','Formation shift'])}
+    </div>`:''}
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Play Type</div>
+      ${fgRg('Play Type','playType',playTypeOpts)}
+      ${showRunConcept?`<div class="fg"><label>Run Concept</label>${rg('runConcept',['Inside zone','Outside zone','Power','Counter','Duo','Sweep / Toss','QB draw','QB option','Sneak','Other'])}</div>`:''}
+      ${showPassDepth?fgRg('Pass Depth','passDepth',['Screen','Short (0–10)','Intermediate (10–20)','Deep (20+)']):''}
+      ${showPassExtended?fgRg('Pass Type','passType',['Quick game','Play action','Dropback','Bootleg / rollout']):''}
+      ${showPassExtended?fgRg('Target','target',['WR','TE','RB','QB scramble']):''}
+    </div>
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Direction</div>
+      ${fgRg('Direction','direction',['Left','Middle','Right'])}
+    </div>
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Result</div>
+      <div class="fg"><label>Exact Yards</label><input type="text" value="${p.yardGain||''}" oninput="setParamD('yardGain',this.value)" placeholder="e.g. 7" style="width:80px;"></div>
+      <div class="fg"><label>Yard Category</label>${rg('yardCat',['Loss','0–3','4–7','8–15','16+'])}</div>
+      <div class="fg"><label>Success</label>
+        <div class="rg">
+          <button class="rb rb-success ${p.success==='Success'?'active':''}" onclick="setParam('success','Success',this)">✓ Success</button>
+          <button class="rb rb-fail    ${p.success==='Fail'   ?'active':''}" onclick="setParam('success','Fail',this)">✗ Fail</button>
+        </div>
+      </div>
+    </div>
+    <div class="params-div"></div>
+    <div class="params-section">
+      <div class="psec-title">Negatives</div>
+      <div class="fg"><label>Negative Events</label><div style="display:flex;flex-direction:column;gap:4px;">${negChecks}</div></div>
+      ${fgRg('Turnover','turnover',['None','Fumble','Interception','Turnover on downs'])}
+    </div>
+    <div class="params-div"></div>
+    <div class="fg notes-g" style="min-width:140px;"><label>Notes</label><textarea oninput="setParamD('notes',this.value)">${p.notes||''}</textarea></div>
+  `;
+  updatePersonnelCount();
+}
+
+function setParam(key,val,btn){
+  if(!S.selectedId) return;
+  S.params[S.selectedId][key]=val;
+  btn.closest('.rg').querySelectorAll('.rb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(key==='playType') renderParams(); else renderTimeline();
+}
+function setCategory(val){ if(!S.selectedId) return; S.params[S.selectedId].category=val; renderParams(); }
+function setMode(mode){
+  S.mode=mode;
+  document.getElementById('mode-simple').classList.toggle('active',mode==='simple');
+  document.getElementById('mode-expert').classList.toggle('active',mode==='expert');
+  if(S.selectedId) renderParams();
+}
+function setParamD(key,val){ if(S.selectedId){S.params[S.selectedId][key]=val; renderTimeline();} }
+function toggleNeg(label,checked){
+  if(!S.selectedId) return;
+  const p=S.params[S.selectedId]; p.negEvents=p.negEvents||[];
+  if(checked){ if(!p.negEvents.includes(label)) p.negEvents.push(label); }
+  else { p.negEvents=p.negEvents.filter(n=>n!==label); }
+  renderTimeline();
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+function saveProject(){
+  const proj={
+    project_id:S.projectId, video:S.videoName||'unknown',
+    match_info:S.matchInfo,
+    items:S.items, params:S.params, overlays:S.overlays
+  };
+  const blob=new Blob([JSON.stringify(proj,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=S.projectId+'.json'; a.click();
+  URL.revokeObjectURL(url); notify('Project saved!');
+}
+document.getElementById('proj-load').addEventListener('change',function(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      S.projectId=d.project_id||S.projectId; S.videoName=d.video;
+      S.matchInfo=Object.assign({date:'',competition:'',home:'',away:'',scout:'',analyst:'',venue:'',season:'',notes:''},d.match_info||{});
+      S.items=d.items||[]; S.params=d.params||{}; S.overlays=d.overlays||{};
+      Object.keys(S.overlays).forEach(id=>{
+        const ov=S.overlays[id];
+        if(!ov||!Array.isArray(ov.players)) S.overlays[id]=emptyOverlay();
+      });
+      S.selectedId=null; renderTimeline(); renderParams();
+      if(fc){fc.clear();fc.renderAll();}
+      notify('Project loaded: '+f.name);
+    }catch(err){console.error(err);notify('Error loading project file');}
+  };
+  r.readAsText(f);
+});
+
+// ── Clear all ────────────────────────────────────────────────
+function clearAllItems(){
+  if(!S.items.length){ notify('Nothing to clear'); return; }
+  document.getElementById('confirm-modal').classList.remove('hidden');
+}
+function closeConfirm(){ document.getElementById('confirm-modal').classList.add('hidden'); }
+function confirmClearAll(){
+  S.items=[]; S.params={}; S.overlays={}; S.selectedId=null;
+  if(fc){fc.clear();fc.renderAll();}
+  renderTimeline(); renderParams();
+  closeConfirm(); notify('All plays and events cleared');
+}
+
+// ── Match Info modal ─────────────────────────────────────────
+function openMatchInfo(){
+  const mi=S.matchInfo;
+  document.getElementById('mi-date').value        = mi.date||'';
+  document.getElementById('mi-competition').value = mi.competition||'';
+  document.getElementById('mi-home').value        = mi.home||'';
+  document.getElementById('mi-away').value        = mi.away||'';
+  document.getElementById('mi-scout').value       = mi.scout||'';
+  document.getElementById('mi-analyst').value     = mi.analyst||'';
+  document.getElementById('mi-venue').value       = mi.venue||'';
+  document.getElementById('mi-season').value      = mi.season||'';
+  document.getElementById('mi-notes').value       = mi.notes||'';
+  document.getElementById('match-info-modal').classList.remove('hidden');
+}
+function closeMatchInfo(){ document.getElementById('match-info-modal').classList.add('hidden'); }
+function saveMatchInfo(){
+  S.matchInfo = {
+    date:        document.getElementById('mi-date').value,
+    competition: document.getElementById('mi-competition').value,
+    home:        document.getElementById('mi-home').value,
+    away:        document.getElementById('mi-away').value,
+    scout:       document.getElementById('mi-scout').value,
+    analyst:     document.getElementById('mi-analyst').value,
+    venue:       document.getElementById('mi-venue').value,
+    season:      document.getElementById('mi-season').value,
+    notes:       document.getElementById('mi-notes').value,
+  };
+  closeMatchInfo();
+  notify('Match info saved');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmt(s){ if(!s||isNaN(s)) return '0:00.000'; return `${Math.floor(s/60)}:${(s%60).toFixed(3).padStart(6,'0')}`; }
+function notify(msg){
+  const el=document.getElementById('notif'); el.textContent=msg; el.style.opacity='1';
+  clearTimeout(notify._t); notify._t=setTimeout(()=>{el.style.opacity='0';},2200);
+}
+
+// ============================================================
+// BOTTOM PANEL DRAG RESIZE
+// ============================================================
+(function(){
+  const handle=document.getElementById('bp-drag-handle'),layout=document.getElementById('main-layout');
+  let dr=false,sy=0,sh=0;
+  handle.addEventListener('mousedown',e=>{
+    dr=true;sy=e.clientY;sh=document.getElementById('bottom-panel').getBoundingClientRect().height;
+    document.body.style.cursor='ns-resize';document.body.style.userSelect='none';e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!dr) return;
+    const d=sy-e.clientY;
+    const h=Math.max(80,Math.min(window.innerHeight*.7,sh+d));
+    layout.style.gridTemplateRows=`1fr ${h}px`;
+    // syncCanvas is triggered by ResizeObserver on #video-area
+  });
+  document.addEventListener('mouseup',()=>{if(dr){dr=false;document.body.style.cursor='';document.body.style.userSelect='';}});
+})();
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load',()=>{
+  buildFabric();
+  setTool('select');
+  renderTimeline();
+  renderParams();
+});
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if(e.code==='Space'){e.preventDefault();togglePlay();}
+  if(e.code==='ArrowLeft'  && !e.shiftKey){e.preventDefault();frameStep(-1);}
+  if(e.code==='ArrowRight' && !e.shiftKey){e.preventDefault();frameStep(1);}
+  if(e.code==='ArrowLeft'  &&  e.shiftKey){e.preventDefault();frameStep(-15);}
+  if(e.code==='ArrowRight' &&  e.shiftKey){e.preventDefault();frameStep(15);}
+  if(e.code==='KeyR'){e.preventDefault();jumpToSelected();}
+  if((e.ctrlKey||e.metaKey)&&e.code==='KeyS'){e.preventDefault();saveProject();}
+  if(e.code==='KeyV') setTool('select');
+  if(e.code==='KeyL') setTool('scrimmage');
+  if(e.code==='KeyO') toggleOverlay();
+  if(e.code==='KeyP') addItem('play');
+  if(e.code==='KeyE') addItem('event');
+  if(e.code==='KeyI') openMatchInfo();
+  if(e.code==='KeyD') setTool('delobj');
+  if(e.code==='Escape'){
+    setTool('select');
+    closeMatchInfo(); closeConfirm();
+  }
+  if(e.code==='Delete'||e.code==='Backspace') deleteSelected();
+  if(e.code==='Digit1') setPlayerPos('WR',document.querySelector('[data-pos="WR"]'));
+  if(e.code==='Digit2') setPlayerPos('RB',document.querySelector('[data-pos="RB"]'));
+  if(e.code==='Digit3') setPlayerPos('TE',document.querySelector('[data-pos="TE"]'));
+  if(e.code==='Digit4') setPlayerPos('OL',document.querySelector('[data-pos="OL"]'));
+  if(e.code==='Digit5') setPlayerPos('QB',document.querySelector('[data-pos="QB"]'));
+});
+</script>
+</body>
+</html>
