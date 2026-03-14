@@ -100,6 +100,14 @@
       "frame": 29841,
       "start": 994.68873,
       "end": null
+    },
+    {
+      "id": "play_a8o7tvdc",
+      "kind": "play",
+      "t": 1026.104121,
+      "frame": 30783,
+      "start": 1026.104121,
+      "end": 1036.314375
     }
   ],
   "params": {
@@ -352,6 +360,36 @@
       "_teCount": 0,
       "_olCount": 0,
       "_qbCount": 0
+    },
+    "play_a8o7tvdc": {
+      "notes": "",
+      "category": "Offensive",
+      "quarter": "Q1",
+      "down": "1",
+      "ytg": "Medium",
+      "fieldPos": "Own territory",
+      "hash": "Middle",
+      "qbAlign": "Shotgun",
+      "receiverDist": "Balanced",
+      "backfield": "Singleback",
+      "motion": "None",
+      "shift": "None",
+      "playType": "Pass",
+      "runConcept": "",
+      "passDepth": "Short (0–10)",
+      "passType": "Dropback",
+      "direction": "Middle",
+      "target": "",
+      "yardGain": "",
+      "yardCat": "",
+      "success": "",
+      "negEvents": [],
+      "turnover": "None",
+      "_wrCount": 0,
+      "_rbCount": 0,
+      "_teCount": 0,
+      "_olCount": 0,
+      "_qbCount": 0
     }
   },
   "overlays": {
@@ -396,6 +434,10 @@
       "los": null
     },
     "event_mvehdd6t": {
+      "players": [],
+      "los": null
+    },
+    "play_a8o7tvdc": {
       "players": [],
       "los": null
     }
