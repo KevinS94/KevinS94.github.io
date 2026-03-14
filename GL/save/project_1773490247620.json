@@ -20,6 +20,14 @@
       "frame": 7773,
       "start": 259.099238,
       "end": null
+    },
+    {
+      "id": "event_rgxnkqbk",
+      "kind": "event",
+      "t": 371.17205,
+      "frame": 11135,
+      "start": 371.17205,
+      "end": null
     }
   ],
   "params": {
@@ -32,10 +40,24 @@
       "_teCount": 0,
       "_olCount": 0,
       "_qbCount": 0
+    },
+    "event_rgxnkqbk": {
+      "notes": "",
+      "label": "Interception ",
+      "player": "",
+      "_wrCount": 0,
+      "_rbCount": 0,
+      "_teCount": 0,
+      "_olCount": 0,
+      "_qbCount": 0
     }
   },
   "overlays": {
     "event_j8t3okuo": {
+      "players": [],
+      "los": null
+    },
+    "event_rgxnkqbk": {
       "players": [],
       "los": null
     }
