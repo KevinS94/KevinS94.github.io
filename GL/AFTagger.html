@@ -303,6 +303,7 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'Barlow',sa
         <div class="ddsep"></div>
         <div class="ddrow" onclick="saveToServer();closeAllMenus()">🌐 Save to server</div>
         <div class="ddrow" onclick="exportLocalJSON();closeAllMenus()">📤 Export local JSON</div>
+        <div class="ddrow" onclick="updateGithubToken();closeAllMenus()">🔑 Update GitHub Token</div>
         <div class="ddsep"></div>
         <div class="ddrow" style="display:flex;align-items:center;gap:8px;cursor:default;" onclick="event.stopPropagation()">
           ⏱ Autosave:
@@ -1251,10 +1252,10 @@ function toggleNeg(label,checked){
 // ============================================================
 // CONSTANTS & CONFIG
 // ============================================================
-const REPO_OWNER  = 'kevins94';
-const REPO_NAME   = 'GL';
-const VIDEOS_PATH = 'videos';
-const SAVE_PATH   = 'save';
+const REPO_OWNER  = 'KevinS94';
+const REPO_NAME   = 'KevinS94.github.io';
+const VIDEOS_PATH = 'GL/videos';
+const SAVE_PATH   = 'GL/save';
 
 // ============================================================
 // DROPDOWN MENUS
@@ -1370,6 +1371,19 @@ async function loadSelectedOnlineProject(){
   }catch(err){ document.getElementById('online-proj-status').textContent='Error: '+err.message; }
 }
 
+
+function updateGithubToken(){
+  const current = localStorage.getItem('gl_github_pat');
+  const msg = current
+    ? 'Enter new GitHub Personal Access Token:\n(current token will be replaced)'
+    : 'Enter GitHub Personal Access Token:\n\nNeeds: repo KevinS94.github.io → Contents: Read and write';
+  const pat = prompt(msg);
+  if(pat && pat.trim()){
+    localStorage.setItem('gl_github_pat', pat.trim());
+    notify('✓ Token updated');
+  }
+}
+  
 // ============================================================
 // SAVE TO SERVER (GitHub Contents API — needs PAT)
 // ============================================================
