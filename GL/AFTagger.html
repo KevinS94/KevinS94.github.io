@@ -247,24 +247,74 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'Barlow',sa
 /* confirm dialog */
 .confirm-msg{font-family:'Barlow',sans-serif;font-size:14px;color:var(--text-primary);line-height:1.6;margin-bottom:20px;}
 .confirm-msg strong{color:var(--red);}
+/* ── DROPDOWN ROWS ── */
+.ddrow{display:block;padding:9px 14px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-primary);letter-spacing:1px;text-transform:uppercase;transition:background .12s;white-space:nowrap;}
+.ddrow:hover{background:var(--bg-hover);}
+.ddsep{height:1px;background:var(--border);margin:2px 0;}
+/* ── AUTOSAVE INDICATOR ── */
+#autosave-indicator{margin-left:auto;font-size:9px;color:var(--text-dim);letter-spacing:1px;font-family:'JetBrains Mono',monospace;}
+#autosave-indicator.saving{color:var(--accent);}
+#autosave-indicator.saved{color:var(--green);}
+#autosave-indicator.error{color:var(--red);}
+/* ── ONLINE FILE BROWSER ── */
+.file-list{max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:3px;margin-top:8px;}
+.file-list::-webkit-scrollbar{width:4px;}.file-list::-webkit-scrollbar-track{background:var(--bg-deep);}.file-list::-webkit-scrollbar-thumb{background:var(--border-bright);}
+.file-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.file-row:last-child{border-bottom:none;}.file-row:hover{background:var(--bg-hover);}
+.file-row .fname{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-primary);}
+.file-row .fsize{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);}
+.file-row.selected-row{background:rgba(232,184,75,.1);}
+.file-row.selected-row .fname{color:var(--accent);}
+.online-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:6px;min-height:16px;}
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <div id="app-header">
-  <div class="logo">Gridiron Labs <span class="logo-sub">v2.0 · 🏈 Football Scout</span></div>
+  <div class="logo">🏈 Grid Iron Scout <span class="logo-sub">v2.1 · American Football Analyst</span></div>
   <div class="hdr-actions">
     <div class="mode-toggle">
       <button class="mode-btn active" id="mode-simple" onclick="setMode('simple')">Simple</button>
       <button class="mode-btn" id="mode-expert" onclick="setMode('expert')">Expert</button>
     </div>
-    <button class="btn" onclick="openMatchInfo()" title="Match information">ℹ Match Info</button>
-    <label class="btn" for="vid-input-hdr">📂 Load Video</label>
-    <input type="file" id="vid-input-hdr" accept="video/*" style="display:none">
-    <label class="btn" for="proj-load">📁 Load Project</label>
-    <input type="file" id="proj-load" accept=".json" style="display:none">
-    <button class="btn btn-accent" onclick="saveProject()">💾 Save Project</button>
+    <button class="btn" onclick="openMatchInfo()" title="Match information [I]">ℹ Match Info</button>
+
+    <!-- Load Video dropdown -->
+    <div style="position:relative;display:inline-block;" id="video-menu-wrap">
+      <button class="btn" onclick="toggleVideoMenu(event)">📂 Video ▾</button>
+      <div id="video-menu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:3px;z-index:500;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.6);">
+        <label class="ddrow" for="vid-input-hdr">💾 Local file
+          <input type="file" id="vid-input-hdr" accept="video/*" style="display:none">
+        </label>
+        <div class="ddsep"></div>
+        <div class="ddrow" onclick="openOnlineVideo();closeAllMenus()">🌐 Online from server</div>
+      </div>
+    </div>
+
+    <!-- Project dropdown -->
+    <div style="position:relative;display:inline-block;" id="proj-menu-wrap">
+      <button class="btn" onclick="toggleProjMenu(event)">📁 Project ▾</button>
+      <div id="proj-menu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:3px;z-index:500;min-width:210px;box-shadow:0 8px 24px rgba(0,0,0,.6);">
+        <div class="ddrow" onclick="openOnlineLoad();closeAllMenus()">🌐 Load from server</div>
+        <label class="ddrow" for="proj-import-input">📥 Import local JSON
+          <input type="file" id="proj-import-input" accept=".json" style="display:none">
+        </label>
+        <div class="ddsep"></div>
+        <div class="ddrow" onclick="saveToServer();closeAllMenus()">🌐 Save to server</div>
+        <div class="ddrow" onclick="exportLocalJSON();closeAllMenus()">📤 Export local JSON</div>
+        <div class="ddsep"></div>
+        <div class="ddrow" style="display:flex;align-items:center;gap:8px;cursor:default;" onclick="event.stopPropagation()">
+          ⏱ Autosave:
+          <select id="autosave-interval" onchange="setAutosaveInterval(+this.value)" style="background:var(--bg-card);border:1px solid var(--border-bright);color:var(--text-primary);padding:2px 6px;font-family:'JetBrains Mono',monospace;font-size:10px;border-radius:2px;outline:none;flex:1;">
+            <option value="0">Off</option>
+            <option value="60" selected>1 min</option>
+            <option value="120">2 min</option>
+            <option value="300">5 min</option>
+          </select>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -304,14 +354,15 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'Barlow',sa
   <!-- VIDEO AREA — fixed in grid, no manual resize -->
   <div id="video-area">
     <div id="load-prompt">
-      <label for="vid-input-main">▶ LOAD VIDEO FILE</label>
+      <label for="vid-input-main" style="padding:10px 28px;background:var(--accent);color:#000;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:4px;border-radius:3px;">▶ LOCAL VIDEO</label>
       <input type="file" id="vid-input-main" accept="video/*" style="display:none">
-      <p>MP4, MOV, WebM — game footage</p>
+      <button onclick="openOnlineVideo()" style="padding:9px 22px;background:var(--bg-card);border:1px solid var(--border-bright);color:var(--text-primary);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:600;letter-spacing:3px;border-radius:3px;">🌐 ONLINE VIDEO</button>
+      <p>MP4, MOV, WebM — local file or from server</p>
     </div>
     <video id="main-video" playsinline></video>
     <!-- Fabric canvas wrapper — positioned/sized by JS to match video render rect -->
     <div id="fabric-wrap"></div>
-    <div id="tool-hint-bar">Active: <b id="hint-text">SELECT — click to select and move objects</b></div>
+    <div id="tool-hint-bar">Active: <b id="hint-text">SELECT — click to select and move objects</b><span id="autosave-indicator">AUTOSAVE: 1 MIN</span></div>
     <div id="video-controls">
       <div id="scrubber-wrap">
         <input type="range" id="scrubber" min="0" max="100" step="0.001" value="0">
@@ -373,6 +424,34 @@ body{background:var(--bg-deep);color:var(--text-primary);font-family:'Barlow',sa
   </div>
 
 </div><!-- end #main-layout -->
+
+<!-- ONLINE VIDEO BROWSER MODAL -->
+<div class="modal-backdrop hidden" id="online-video-modal" onclick="if(event.target===this)closeOnlineVideo()">
+  <div class="modal" style="max-width:500px;">
+    <h3>🌐 Online Video</h3>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:10px;">From <span style="color:var(--accent);">kevins94.github.io/GL/videos/</span></p>
+    <div id="online-video-list" class="file-list"><div style="padding:16px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">Loading…</div></div>
+    <div id="online-video-status" class="online-status"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeOnlineVideo()">Cancel</button>
+      <button class="btn btn-accent" id="online-video-ok" onclick="loadSelectedOnlineVideo()" disabled>▶ Load Video</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONLINE PROJECT LOAD MODAL -->
+<div class="modal-backdrop hidden" id="online-load-modal" onclick="if(event.target===this)closeOnlineLoad()">
+  <div class="modal" style="max-width:500px;">
+    <h3>🌐 Load Project from Server</h3>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:10px;">From <span style="color:var(--accent);">kevins94.github.io/GL/save/</span></p>
+    <div id="online-proj-list" class="file-list"><div style="padding:16px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);">Loading…</div></div>
+    <div id="online-proj-status" class="online-status"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeOnlineLoad()">Cancel</button>
+      <button class="btn btn-accent" id="online-proj-ok" onclick="loadSelectedOnlineProject()" disabled>📂 Load Project</button>
+    </div>
+  </div>
+</div>
 
 <!-- MATCH INFO MODAL -->
 <div class="modal-backdrop hidden" id="match-info-modal" onclick="if(event.target===this)closeMatchInfo()">
@@ -909,11 +988,16 @@ scrubber.addEventListener('mousedown',()=>{scrubber._drag=true;});
 scrubber.addEventListener('input',()=>{ if(S.videoLoaded) video.currentTime=+scrubber.value; });
 scrubber.addEventListener('mouseup',()=>{scrubber._drag=false;});
 
-[document.getElementById('vid-input-main'),document.getElementById('vid-input-hdr')].forEach(el=>{
-  el.addEventListener('change',e=>{
-    const f=e.target.files[0]; if(!f) return;
-    S.videoName=f.name; initVideo(URL.createObjectURL(f)); notify('Video loaded: '+f.name);
-  });
+// Local video — header dropdown input
+document.getElementById('vid-input-hdr').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  S.videoName=f.name; initVideo(URL.createObjectURL(f)); notify('Video loaded: '+f.name);
+  closeAllMenus();
+});
+// Local video — load prompt button (hidden input triggered via label in HTML)
+document.getElementById('vid-input-main').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  S.videoName=f.name; initVideo(URL.createObjectURL(f)); notify('Video loaded: '+f.name);
 });
 
 // ── ResizeObserver: resync whenever #video-area changes size ──
@@ -949,6 +1033,7 @@ function addItem(kind) {
   S.overlays[id] = emptyOverlay();
   renderTimeline(); selectItem(id);
   notify(`${kind.toUpperCase()} added @ ${fmt(t)}`);
+  markDirty();
 }
 
 function deleteItem() {
@@ -959,6 +1044,7 @@ function deleteItem() {
   S.selectedId = null;
   if (fc){ fc.clear(); fc.renderAll(); }
   renderTimeline(); renderParams(); notify('Item deleted');
+  markDirty();
 }
 
 function selectItem(id) {
@@ -1144,57 +1230,250 @@ function setParam(key,val,btn){
   btn.closest('.rg').querySelectorAll('.rb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(key==='playType') renderParams(); else renderTimeline();
+  markDirty();
 }
-function setCategory(val){ if(!S.selectedId) return; S.params[S.selectedId].category=val; renderParams(); }
+function setCategory(val){ if(!S.selectedId) return; S.params[S.selectedId].category=val; renderParams(); markDirty(); }
 function setMode(mode){
   S.mode=mode;
   document.getElementById('mode-simple').classList.toggle('active',mode==='simple');
   document.getElementById('mode-expert').classList.toggle('active',mode==='expert');
   if(S.selectedId) renderParams();
 }
-function setParamD(key,val){ if(S.selectedId){S.params[S.selectedId][key]=val; renderTimeline();} }
+function setParamD(key,val){ if(S.selectedId){S.params[S.selectedId][key]=val; renderTimeline(); markDirty();} }
 function toggleNeg(label,checked){
   if(!S.selectedId) return;
   const p=S.params[S.selectedId]; p.negEvents=p.negEvents||[];
   if(checked){ if(!p.negEvents.includes(label)) p.negEvents.push(label); }
   else { p.negEvents=p.negEvents.filter(n=>n!==label); }
-  renderTimeline();
+  renderTimeline(); markDirty();
 }
 
 // ============================================================
-// SAVE / LOAD
+// CONSTANTS & CONFIG
 // ============================================================
-function saveProject(){
-  const proj={
-    project_id:S.projectId, video:S.videoName||'unknown',
-    match_info:S.matchInfo,
-    items:S.items, params:S.params, overlays:S.overlays
-  };
-  const blob=new Blob([JSON.stringify(proj,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=S.projectId+'.json'; a.click();
-  URL.revokeObjectURL(url); notify('Project saved!');
+const REPO_OWNER  = 'kevins94';
+const REPO_NAME   = 'GL';
+const VIDEOS_PATH = 'videos';
+const SAVE_PATH   = 'save';
+
+// ============================================================
+// DROPDOWN MENUS
+// ============================================================
+function toggleVideoMenu(e){
+  e && e.stopPropagation();
+  const m=document.getElementById('video-menu');
+  const show=m.style.display==='none';
+  closeAllMenus();
+  if(show) m.style.display='block';
 }
-document.getElementById('proj-load').addEventListener('change',function(e){
-  const f=e.target.files[0]; if(!f) return;
+function toggleProjMenu(e){
+  e && e.stopPropagation();
+  const m=document.getElementById('proj-menu');
+  const show=m.style.display==='none';
+  closeAllMenus();
+  if(show) m.style.display='block';
+}
+function closeAllMenus(){
+  document.getElementById('video-menu').style.display='none';
+  document.getElementById('proj-menu').style.display='none';
+}
+document.addEventListener('click', closeAllMenus);
+
+// ============================================================
+// GITHUB CONTENTS API — list files
+// ============================================================
+async function listGithubFolder(path){
+  const url=`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
+  const r=await fetch(url,{headers:{Accept:'application/vnd.github.v3+json'}});
+  if(!r.ok) throw new Error(`GitHub API ${r.status}`);
+  const files=await r.json();
+  return files.filter(f=>f.type==='file');
+}
+
+// ============================================================
+// ONLINE VIDEO BROWSER
+// ============================================================
+let selectedOnlineVideo=null;
+function openOnlineVideo(){
+  selectedOnlineVideo=null;
+  document.getElementById('online-video-ok').disabled=true;
+  document.getElementById('online-video-status').textContent='';
+  document.getElementById('online-video-modal').classList.remove('hidden');
+  loadOnlineVideoList();
+}
+function closeOnlineVideo(){ document.getElementById('online-video-modal').classList.add('hidden'); }
+
+async function loadOnlineVideoList(){
+  const list=document.getElementById('online-video-list');
+  list.innerHTML='<div style="padding:16px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text-dim);">Loading…</div>';
+  try{
+    const files=await listGithubFolder(VIDEOS_PATH);
+    const vids=files.filter(f=>/\.(mp4|mov|webm|mkv|avi)$/i.test(f.name));
+    if(!vids.length){list.innerHTML='<div style="padding:16px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text-dim);">No videos found in /videos/</div>';return;}
+    list.innerHTML=vids.map(f=>`<div class="file-row" onclick="selectOnlineVideo(this,'${f.name}','${f.download_url}')"><span class="fname">${f.name}</span><span class="fsize">${f.size?(f.size/1024/1024).toFixed(1)+' MB':''}</span></div>`).join('');
+  }catch(err){list.innerHTML=`<div style="padding:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red);">Error: ${err.message}</div>`;}
+}
+function selectOnlineVideo(row,name,url){
+  document.querySelectorAll('#online-video-list .file-row').forEach(r=>r.classList.remove('selected-row'));
+  row.classList.add('selected-row');
+  selectedOnlineVideo={name,url};
+  document.getElementById('online-video-ok').disabled=false;
+  document.getElementById('online-video-status').textContent='Selected: '+name;
+}
+function loadSelectedOnlineVideo(){
+  if(!selectedOnlineVideo) return;
+  S.videoName=selectedOnlineVideo.name;
+  initVideo(selectedOnlineVideo.url);
+  closeOnlineVideo();
+  notify('Online video: '+selectedOnlineVideo.name);
+}
+
+// ============================================================
+// ONLINE PROJECT BROWSER
+// ============================================================
+let selectedOnlineProject=null;
+function openOnlineLoad(){
+  selectedOnlineProject=null;
+  document.getElementById('online-proj-ok').disabled=true;
+  document.getElementById('online-proj-status').textContent='';
+  document.getElementById('online-load-modal').classList.remove('hidden');
+  loadOnlineProjList();
+}
+function closeOnlineLoad(){ document.getElementById('online-load-modal').classList.add('hidden'); }
+
+async function loadOnlineProjList(){
+  const list=document.getElementById('online-proj-list');
+  list.innerHTML='<div style="padding:16px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text-dim);">Loading…</div>';
+  try{
+    const files=await listGithubFolder(SAVE_PATH);
+    const projs=files.filter(f=>f.name.endsWith('.json'));
+    if(!projs.length){list.innerHTML='<div style="padding:16px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text-dim);">No saved projects found.</div>';return;}
+    list.innerHTML=projs.map(f=>`<div class="file-row" onclick="selectOnlineProject(this,'${f.name}','${f.download_url}')"><span class="fname">${f.name}</span><span class="fsize">${f.size?Math.round(f.size/1024)+' KB':''}</span></div>`).join('');
+  }catch(err){list.innerHTML=`<div style="padding:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red);">Error: ${err.message}</div>`;}
+}
+function selectOnlineProject(row,name,url){
+  document.querySelectorAll('#online-proj-list .file-row').forEach(r=>r.classList.remove('selected-row'));
+  row.classList.add('selected-row');
+  selectedOnlineProject={name,url};
+  document.getElementById('online-proj-ok').disabled=false;
+  document.getElementById('online-proj-status').textContent='Selected: '+name;
+}
+async function loadSelectedOnlineProject(){
+  if(!selectedOnlineProject) return;
+  const{name,url}=selectedOnlineProject;
+  document.getElementById('online-proj-status').textContent='Loading…';
+  try{
+    const r=await fetch(url+'?t='+Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    applyLoadedProject(await r.json());
+    closeOnlineLoad(); notify('Loaded: '+name);
+  }catch(err){ document.getElementById('online-proj-status').textContent='Error: '+err.message; }
+}
+
+// ============================================================
+// SAVE TO SERVER (GitHub Contents API — needs PAT)
+// ============================================================
+async function saveToServer(){
+  const proj=buildProjectObject();
+  const json=JSON.stringify(proj,null,2);
+  const filename=S.projectId+'.json';
+
+  let pat=localStorage.getItem('gl_github_pat');
+  if(!pat){
+    pat=prompt('GitHub Personal Access Token (repo → Contents write):\nStored only in your browser localStorage.');
+    if(!pat){ notify('Save cancelled'); return; }
+    localStorage.setItem('gl_github_pat',pat);
+  }
+
+  setAutosaveIndicator('saving','SAVING…');
+  try{
+    const apiUrl=`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${SAVE_PATH}/${filename}`;
+    const headers={Authorization:'token '+pat,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'};
+    let sha;
+    try{ const chk=await fetch(apiUrl,{headers}); if(chk.ok) sha=(await chk.json()).sha; }catch(e){}
+    const body={message:`save ${filename} ${new Date().toISOString()}`,content:btoa(unescape(encodeURIComponent(json)))};
+    if(sha) body.sha=sha;
+    const r=await fetch(apiUrl,{method:'PUT',headers,body:JSON.stringify(body)});
+    if(!r.ok){
+      const err=await r.json();
+      if(r.status===401||r.status===403) localStorage.removeItem('gl_github_pat');
+      throw new Error(err.message||'HTTP '+r.status);
+    }
+    autosaveDirty=false;
+    setAutosaveIndicator('saved','✓ SAVED');
+    setTimeout(()=>updateAutosaveLabel(),3000);
+    notify('Saved to server: '+filename);
+  }catch(err){
+    setAutosaveIndicator('error','✗ FAILED');
+    notify('Server save failed: '+err.message);
+    console.error(err);
+  }
+}
+
+// ============================================================
+// IMPORT / EXPORT LOCAL JSON
+// ============================================================
+function exportLocalJSON(){
+  const blob=new Blob([JSON.stringify(buildProjectObject(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=S.projectId+'.json';a.click();
+  URL.revokeObjectURL(url);notify('Exported: '+S.projectId+'.json');
+}
+
+document.getElementById('proj-import-input').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=ev=>{
-    try{
-      const d=JSON.parse(ev.target.result);
-      S.projectId=d.project_id||S.projectId; S.videoName=d.video;
-      S.matchInfo=Object.assign({date:'',competition:'',home:'',away:'',scout:'',analyst:'',venue:'',season:'',notes:''},d.match_info||{});
-      S.items=d.items||[]; S.params=d.params||{}; S.overlays=d.overlays||{};
-      Object.keys(S.overlays).forEach(id=>{
-        const ov=S.overlays[id];
-        if(!ov||!Array.isArray(ov.players)) S.overlays[id]=emptyOverlay();
-      });
-      S.selectedId=null; renderTimeline(); renderParams();
-      if(fc){fc.clear();fc.renderAll();}
-      notify('Project loaded: '+f.name);
-    }catch(err){console.error(err);notify('Error loading project file');}
-  };
+  r.onload=ev=>{try{applyLoadedProject(JSON.parse(ev.target.result));notify('Imported: '+f.name);}catch(err){notify('Error reading JSON');}};
   r.readAsText(f);
+  this.value='';
 });
+
+// ============================================================
+// AUTOSAVE
+// ============================================================
+let autosaveIntervalSecs=60;
+let autosaveTimer=null;
+let autosaveDirty=false;
+
+function markDirty(){ autosaveDirty=true; }
+
+function setAutosaveInterval(secs){
+  autosaveIntervalSecs=secs;
+  clearInterval(autosaveTimer);autosaveTimer=null;
+  if(secs>0){
+    autosaveTimer=setInterval(()=>{ if(autosaveDirty&&S.items.length>0) saveToServer(); },secs*1000);
+  }
+  updateAutosaveLabel();
+}
+
+function updateAutosaveLabel(){
+  const el=document.getElementById('autosave-indicator');
+  el.className='';
+  if(autosaveIntervalSecs===0){ el.textContent='AUTOSAVE: OFF'; }
+  else{ const l=autosaveIntervalSecs>=60?(autosaveIntervalSecs/60)+' MIN':autosaveIntervalSecs+'S'; el.textContent='AUTOSAVE: '+l; }
+}
+
+function setAutosaveIndicator(cls,text){
+  const el=document.getElementById('autosave-indicator');
+  el.className=cls; el.textContent=text;
+}
+
+// ============================================================
+// SHARED PROJECT HELPERS
+// ============================================================
+function buildProjectObject(){
+  return {project_id:S.projectId,video:S.videoName||'unknown',match_info:S.matchInfo,items:S.items,params:S.params,overlays:S.overlays};
+}
+
+function applyLoadedProject(d){
+  S.projectId=d.project_id||S.projectId; S.videoName=d.video;
+  S.matchInfo=Object.assign({date:'',competition:'',home:'',away:'',scout:'',analyst:'',venue:'',season:'',notes:''},d.match_info||{});
+  S.items=d.items||[]; S.params=d.params||{}; S.overlays=d.overlays||{};
+  Object.keys(S.overlays).forEach(id=>{const ov=S.overlays[id];if(!ov||!Array.isArray(ov.players))S.overlays[id]=emptyOverlay();});
+  S.selectedId=null; renderTimeline(); renderParams();
+  if(fc){fc.clear();fc.renderAll();}
+  autosaveDirty=false;
+}
 
 // ── Clear all ────────────────────────────────────────────────
 function clearAllItems(){
@@ -1207,6 +1486,7 @@ function confirmClearAll(){
   if(fc){fc.clear();fc.renderAll();}
   renderTimeline(); renderParams();
   closeConfirm(); notify('All plays and events cleared');
+  markDirty();
 }
 
 // ── Match Info modal ─────────────────────────────────────────
@@ -1238,6 +1518,7 @@ function saveMatchInfo(){
   };
   closeMatchInfo();
   notify('Match info saved');
+  markDirty();
 }
 
 // ============================================================
@@ -1277,6 +1558,7 @@ window.addEventListener('load',()=>{
   setTool('select');
   renderTimeline();
   renderParams();
+  setAutosaveInterval(60); // start 1-min autosave
 });
 
 // ============================================================
@@ -1290,7 +1572,7 @@ document.addEventListener('keydown',e=>{
   if(e.code==='ArrowLeft'  &&  e.shiftKey){e.preventDefault();frameStep(-15);}
   if(e.code==='ArrowRight' &&  e.shiftKey){e.preventDefault();frameStep(15);}
   if(e.code==='KeyR'){e.preventDefault();jumpToSelected();}
-  if((e.ctrlKey||e.metaKey)&&e.code==='KeyS'){e.preventDefault();saveProject();}
+  if((e.ctrlKey||e.metaKey)&&e.code==='KeyS'){e.preventDefault();saveToServer();}
   if(e.code==='KeyV') setTool('select');
   if(e.code==='KeyL') setTool('scrimmage');
   if(e.code==='KeyO') toggleOverlay();
@@ -1300,7 +1582,7 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyD') setTool('delobj');
   if(e.code==='Escape'){
     setTool('select');
-    closeMatchInfo(); closeConfirm();
+    closeMatchInfo(); closeConfirm(); closeOnlineVideo(); closeOnlineLoad();
   }
   if(e.code==='Delete'||e.code==='Backspace') deleteSelected();
   if(e.code==='Digit1') setPlayerPos('WR',document.querySelector('[data-pos="WR"]'));
