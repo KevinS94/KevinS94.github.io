@@ -379,6 +379,8 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 24px;
+  /* Extra top padding so first element is never under the fixed navbar */
+  padding-top: calc(var(--nav-height) + 32px);
 }
 
 .section-header {
@@ -568,6 +570,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   grid-template-columns: 240px 1fr;
   gap: 0;
   min-height: calc(100vh - var(--nav-height));
+  margin-top: var(--nav-height);
 }
 
 .audit-sidebar {
@@ -850,6 +853,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   max-width: 1100px;
   margin: 0 auto;
   padding: 32px 24px;
+  padding-top: calc(var(--nav-height) + 32px);
 }
 
 .dashboard-top {
@@ -1081,6 +1085,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   max-width: 760px;
   margin: 0 auto;
   padding: 32px 24px;
+  padding-top: calc(var(--nav-height) + 32px);
 }
 
 .scan-item {
@@ -1130,6 +1135,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   background: #E8E8E8;
   min-height: calc(100vh - var(--nav-height));
   padding: 40px 24px;
+  padding-top: calc(var(--nav-height) + 40px);
 }
 
 .report-paper {
@@ -1985,6 +1991,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
       </div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="importScanJSON()">↑ Importeer JSON</button>
+        <button class="btn btn-secondary" onclick="exportAllScansJSON()">↓ Exporteer alle scans</button>
         <button class="btn btn-primary" onclick="startNewScan()">+ New Scan</button>
       </div>
     </div>
@@ -3547,6 +3554,31 @@ function exportScanJSON() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('Scan geëxporteerd als ' + filename);
+}
+
+function exportAllScansJSON() {
+  if (!savedScans.length) {
+    showToast('Geen opgeslagen scans om te exporteren.');
+    return;
+  }
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    appVersion: APP_CONFIG.version,
+    totalScans: savedScans.length,
+    scans: savedScans
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().substring(0, 10);
+  a.href = url;
+  a.download = `dmrs_alle_scans_${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`${savedScans.length} scan(s) geëxporteerd.`);
 }
 
 function importScanJSON() {
