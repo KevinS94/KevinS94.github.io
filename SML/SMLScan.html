@@ -60,6 +60,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  /* Push all content below the fixed nav */
+  padding-top: var(--nav-height);
 }
 
 button { font-family: var(--font-body); cursor: pointer; border: none; outline: none; }
@@ -83,9 +85,9 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
 }
-#app-nav::-webkit-scrollbar { display: none; } /* Safari/Chrome */
+#app-nav::-webkit-scrollbar { display: none; }
 
 .nav-brand {
   display: flex;
@@ -214,13 +216,8 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
 .btn-danger:hover { background: #fee2e2; }
 
 /* ============================================================
-   MAIN CONTENT
+   VIEWS — all sit in normal document flow below the nav
    ============================================================ */
-#app-content {
-  margin-top: var(--nav-height);
-  min-height: calc(100vh - var(--nav-height));
-}
-
 .view { display: none; }
 .view.active { display: block; }
 
@@ -228,13 +225,19 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
    HOME SCREEN
    ============================================================ */
 #view-home {
+  /* Full viewport height minus the nav */
   min-height: calc(100vh - var(--nav-height));
   display: none;
   background: linear-gradient(135deg, #0F1A35 0%, #1A2A4A 50%, #0F1A35 100%);
   position: relative;
   overflow: hidden;
 }
-#view-home.active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+#view-home.active {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
 .home-grid-bg {
   position: absolute;
@@ -355,9 +358,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   justify-content: center;
 }
 
-.home-stat {
-  text-align: center;
-}
+.home-stat { text-align: center; }
 .home-stat-value {
   font-family: var(--font-mono);
   font-size: 28px;
@@ -588,6 +589,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   display: grid;
   grid-template-columns: 240px 1fr;
   gap: 0;
+  /* Fill remaining viewport below nav */
   min-height: calc(100vh - var(--nav-height));
 }
 
@@ -595,6 +597,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
   background: var(--surface);
   border-right: 1px solid var(--border);
   padding: 24px 16px;
+  /* Stick to top of the page (below nav, handled by body padding-top) */
   position: sticky;
   top: var(--nav-height);
   height: calc(100vh - var(--nav-height));
@@ -1483,6 +1486,8 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
    PRINT STYLES
    ============================================================ */
 @media print {
+  body { padding-top: 0; }
+
   #app-nav,
   .print-hide,
   #view-home,
@@ -1521,28 +1526,16 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
     min-height: 280px;
   }
 
-  .report-section {
-    page-break-inside: avoid;
-  }
-
-  .report-charts-row {
-    page-break-inside: avoid;
-  }
-
-  .report-topic-table tr {
-    page-break-inside: avoid;
-  }
-
-  .report-reco-item {
-    page-break-inside: avoid;
-  }
-
-  canvas {
-    max-width: 100%;
-  }
+  .report-section { page-break-inside: avoid; }
+  .report-charts-row { page-break-inside: avoid; }
+  .report-topic-table tr { page-break-inside: avoid; }
+  .report-reco-item { page-break-inside: avoid; }
+  canvas { max-width: 100%; }
 }
 
-/* Responsive touch adjustments */
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 768px) {
   .audit-layout { grid-template-columns: 1fr; }
   .audit-sidebar { display: none; }
@@ -2028,7 +2021,7 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
 </div>
 
 <!-- ============================================================
-     MODAL — Confirm delete / new
+     MODAL
      ============================================================ -->
 <div class="modal-overlay hidden" id="modal-overlay">
   <div class="modal-box">
@@ -2047,13 +2040,9 @@ input, textarea, select { font-family: var(--font-body); outline: none; }
 <div class="toast" id="toast"></div>
 
 <!-- ============================================================
-     JAVASCRIPT — DATA MODEL
+     JAVASCRIPT — identical to original, no logic changes
      ============================================================ -->
 <script>
-/* ============================================================
-   CENTRAL CONFIGURATION OBJECT
-   Edit topics, parameters, and score descriptions here.
-   ============================================================ */
 const APP_CONFIG = {
   appName: 'Digital Machinist Readiness Scan',
   version: '1.0',
@@ -2063,218 +2052,44 @@ const APP_CONFIG = {
     { min: 1.51, max: 2.25, label: 'Structured', class: 'maturity-structured', color: '#3B82F6' },
     { min: 2.26, max: 3.00, label: 'Advanced',   class: 'maturity-advanced',   color: '#10B981' }
   ],
-  /* ==========================================
-     TOPICS — edit or add topics and params here
-     ========================================== */
   topics: [
     {
       id: 'cad',
       title: 'CAD / Product Definition',
-      applicabilityField: 'design', // 'yes' or 'partly' = applicable
+      applicabilityField: 'design',
       applicabilityValues: ['yes', 'partly', 'Ja'],
       params: [
-        {
-          id: 'cad_proddef',
-          title: 'Product Definition Method',
-          levels: [
-            '2D drawings only',
-            '2D leading with 3D reference',
-            '3D model leading with 2D tolerances',
-            'Model Based Definition (PMI)'
-          ]
-        },
-        {
-          id: 'cad_dim',
-          title: 'Dimensioning Method',
-          levels: [
-            'Linear dimensions only',
-            'Limited GD&T',
-            'GD&T systematically applied',
-            'GD&T integrated in PMI'
-          ]
-        },
-        {
-          id: 'cad_camready',
-          title: 'CAM Readiness of CAD',
-          levels: [
-            'Models often repaired for CAM',
-            'Regular adjustments needed',
-            'Mostly CAM-ready models',
-            'Models structured for machining'
-          ]
-        },
-        {
-          id: 'cad_integration',
-          title: 'CAD Integration',
-          levels: [
-            'Manual STEP/IGES transfer',
-            'CAD used but limited integration',
-            'Direct CAD to CAM use',
-            'CAD integrated with CAM and CAI'
-          ]
-        }
+        { id: 'cad_proddef', title: 'Product Definition Method', levels: ['2D drawings only','2D leading with 3D reference','3D model leading with 2D tolerances','Model Based Definition (PMI)'] },
+        { id: 'cad_dim', title: 'Dimensioning Method', levels: ['Linear dimensions only','Limited GD&T','GD&T systematically applied','GD&T integrated in PMI'] },
+        { id: 'cad_camready', title: 'CAM Readiness of CAD', levels: ['Models often repaired for CAM','Regular adjustments needed','Mostly CAM-ready models','Models structured for machining'] },
+        { id: 'cad_integration', title: 'CAD Integration', levels: ['Manual STEP/IGES transfer','CAD used but limited integration','Direct CAD to CAM use','CAD integrated with CAM and CAI'] }
       ]
     },
     {
       id: 'cam',
       title: 'CAM & CNC Programming',
       params: [
-        {
-          id: 'cam_usage',
-          title: 'CAM Usage',
-          levels: [
-            'Manual programming',
-            'CAM for complex parts',
-            'CAM standard for most parts',
-            'CAM used for all parts'
-          ]
-        },
-        {
-          id: 'cam_standard',
-          title: 'CAM Programming Standard',
-          levels: [
-            'No standards',
-            'Informal agreements',
-            'Documented standards',
-            'Company-wide CAM standard'
-          ]
-        },
-        {
-          id: 'cam_reuse',
-          title: 'Strategy Reuse',
-          levels: [
-            'Every program from scratch',
-            'Copy previous programs',
-            'Reusable strategies',
-            'Full CAM templates'
-          ]
-        },
-        {
-          id: 'cam_naming',
-          title: 'Naming & Project Structure',
-          levels: [
-            'No structure',
-            'Basic naming',
-            'Standard naming',
-            'Structured CAM projects'
-          ]
-        },
-        {
-          id: 'cam_tools',
-          title: 'Tool Management',
-          levels: [
-            'Manual tools',
-            'Local tool libraries',
-            'Central tool library',
-            'Tool database linked to machines'
-          ]
-        },
-        {
-          id: 'cam_cutting',
-          title: 'Cutting Data Management',
-          levels: [
-            'Experience based',
-            'Manufacturer data',
-            'Internal feed/speed library',
-            'Dynamic library with feedback'
-          ]
-        },
-        {
-          id: 'cam_setup',
-          title: 'Setup Documentation',
-          levels: [
-            'Oral transfer',
-            'Basic setup sheet',
-            'Digital setup sheet',
-            'Full digital setup documentation'
-          ]
-        },
-        {
-          id: 'cam_sim',
-          title: 'Simulation',
-          levels: [
-            'No simulation',
-            'Toolpath simulation',
-            'Machine simulation',
-            'Full digital machine model'
-          ]
-        },
-        {
-          id: 'cam_post',
-          title: 'Postprocessor Management',
-          levels: [
-            'Local posts',
-            'Multiple unmanaged posts',
-            'Standard posts per machine',
-            'Post and NC version control'
-          ]
-        }
+        { id: 'cam_usage', title: 'CAM Usage', levels: ['Manual programming','CAM for complex parts','CAM standard for most parts','CAM used for all parts'] },
+        { id: 'cam_standard', title: 'CAM Programming Standard', levels: ['No standards','Informal agreements','Documented standards','Company-wide CAM standard'] },
+        { id: 'cam_reuse', title: 'Strategy Reuse', levels: ['Every program from scratch','Copy previous programs','Reusable strategies','Full CAM templates'] },
+        { id: 'cam_naming', title: 'Naming & Project Structure', levels: ['No structure','Basic naming','Standard naming','Structured CAM projects'] },
+        { id: 'cam_tools', title: 'Tool Management', levels: ['Manual tools','Local tool libraries','Central tool library','Tool database linked to machines'] },
+        { id: 'cam_cutting', title: 'Cutting Data Management', levels: ['Experience based','Manufacturer data','Internal feed/speed library','Dynamic library with feedback'] },
+        { id: 'cam_setup', title: 'Setup Documentation', levels: ['Oral transfer','Basic setup sheet','Digital setup sheet','Full digital setup documentation'] },
+        { id: 'cam_sim', title: 'Simulation', levels: ['No simulation','Toolpath simulation','Machine simulation','Full digital machine model'] },
+        { id: 'cam_post', title: 'Postprocessor Management', levels: ['Local posts','Multiple unmanaged posts','Standard posts per machine','Post and NC version control'] }
       ]
     },
     {
       id: 'shopfloor',
       title: 'Shopfloor & Machining Execution',
       params: [
-        {
-          id: 'sf_transfer',
-          title: 'Program Transfer',
-          levels: [
-            'USB/manual',
-            'Network folders',
-            'Central program storage',
-            'DNC / integrated system'
-          ]
-        },
-        {
-          id: 'sf_selection',
-          title: 'Program Selection',
-          levels: [
-            'Manual search',
-            'Local machine storage',
-            'Central structured storage',
-            'Selection via MES/DNC'
-          ]
-        },
-        {
-          id: 'sf_setup',
-          title: 'Digital Setup Info',
-          levels: [
-            'Paper / verbal',
-            'Printed setup sheets',
-            'Digital setup sheets',
-            'Integrated with program'
-          ]
-        },
-        {
-          id: 'sf_toolprep',
-          title: 'Tool Preparation',
-          levels: [
-            'Measured on machine',
-            'Pre-measured tools',
-            'Central presetting',
-            'Digital tool data transfer'
-          ]
-        },
-        {
-          id: 'sf_monitor',
-          title: 'Machine Monitoring',
-          levels: [
-            'No monitoring',
-            'Operator checks',
-            'Monitoring software',
-            'Production analytics'
-          ]
-        },
-        {
-          id: 'sf_trace',
-          title: 'Traceability',
-          levels: [
-            'No tracking',
-            'Paper tracking',
-            'Digital records',
-            'Full digital traceability'
-          ]
-        }
+        { id: 'sf_transfer', title: 'Program Transfer', levels: ['USB/manual','Network folders','Central program storage','DNC / integrated system'] },
+        { id: 'sf_selection', title: 'Program Selection', levels: ['Manual search','Local machine storage','Central structured storage','Selection via MES/DNC'] },
+        { id: 'sf_setup', title: 'Digital Setup Info', levels: ['Paper / verbal','Printed setup sheets','Digital setup sheets','Integrated with program'] },
+        { id: 'sf_toolprep', title: 'Tool Preparation', levels: ['Measured on machine','Pre-measured tools','Central presetting','Digital tool data transfer'] },
+        { id: 'sf_monitor', title: 'Machine Monitoring', levels: ['No monitoring','Operator checks','Monitoring software','Production analytics'] },
+        { id: 'sf_trace', title: 'Traceability', levels: ['No tracking','Paper tracking','Digital records','Full digital traceability'] }
       ]
     },
     {
@@ -2283,162 +2098,39 @@ const APP_CONFIG = {
       applicabilityField: 'metrology',
       applicabilityValues: ['yes'],
       params: [
-        {
-          id: 'met_method',
-          title: 'Measurement Method',
-          levels: [
-            'Manual gauges',
-            'Manual + occasional CMM',
-            'Systematic CMM',
-            'Automated inspection'
-          ]
-        },
-        {
-          id: 'met_prog',
-          title: 'Inspection Programming',
-          levels: [
-            'No programs',
-            'Manual programming',
-            'CAD-based inspection',
-            'PMI-driven inspection'
-          ]
-        },
-        {
-          id: 'met_cad',
-          title: 'CAD Integration',
-          levels: [
-            'No CAD usage',
-            'CAD as reference',
-            'CAD inspection model',
-            'CAD + PMI automation'
-          ]
-        },
-        {
-          id: 'met_store',
-          title: 'Measurement Data Storage',
-          levels: [
-            'No storage',
-            'Local reports',
-            'Digital storage',
-            'Central data system'
-          ]
-        },
-        {
-          id: 'met_feedback',
-          title: 'Feedback to Production',
-          levels: [
-            'Quality check only',
-            'Investigate issues',
-            'Process analysis',
-            'Closed-loop improvement'
-          ]
-        }
+        { id: 'met_method', title: 'Measurement Method', levels: ['Manual gauges','Manual + occasional CMM','Systematic CMM','Automated inspection'] },
+        { id: 'met_prog', title: 'Inspection Programming', levels: ['No programs','Manual programming','CAD-based inspection','PMI-driven inspection'] },
+        { id: 'met_cad', title: 'CAD Integration', levels: ['No CAD usage','CAD as reference','CAD inspection model','CAD + PMI automation'] },
+        { id: 'met_store', title: 'Measurement Data Storage', levels: ['No storage','Local reports','Digital storage','Central data system'] },
+        { id: 'met_feedback', title: 'Feedback to Production', levels: ['Quality check only','Investigate issues','Process analysis','Closed-loop improvement'] }
       ]
     },
     {
       id: 'people',
       title: 'People, Training & Knowledge',
       params: [
-        {
-          id: 'ppl_know',
-          title: 'Knowledge Retention',
-          levels: [
-            'Knowledge in individuals',
-            'Limited sharing',
-            'Documented processes',
-            'Structured knowledge base'
-          ]
-        },
-        {
-          id: 'ppl_train',
-          title: 'Training',
-          levels: [
-            'No structured training',
-            'Ad hoc training',
-            'Regular training',
-            'Structured training program'
-          ]
-        },
-        {
-          id: 'ppl_transfer',
-          title: 'Program Transferability',
-          levels: [
-            'Only creator understands',
-            'Basic structure',
-            'Consistent programs',
-            'Fully transferable programs'
-          ]
-        },
-        {
-          id: 'ppl_collab',
-          title: 'Cross-Department Collaboration',
-          levels: [
-            'Silo departments',
-            'Informal communication',
-            'Regular coordination',
-            'Integrated workflow'
-          ]
-        },
-        {
-          id: 'ppl_ci',
-          title: 'Continuous Improvement',
-          levels: [
-            'No improvement process',
-            'Reactive improvements',
-            'Regular improvements',
-            'Continuous digital improvement'
-          ]
-        }
+        { id: 'ppl_know', title: 'Knowledge Retention', levels: ['Knowledge in individuals','Limited sharing','Documented processes','Structured knowledge base'] },
+        { id: 'ppl_train', title: 'Training', levels: ['No structured training','Ad hoc training','Regular training','Structured training program'] },
+        { id: 'ppl_transfer', title: 'Program Transferability', levels: ['Only creator understands','Basic structure','Consistent programs','Fully transferable programs'] },
+        { id: 'ppl_collab', title: 'Cross-Department Collaboration', levels: ['Silo departments','Informal communication','Regular coordination','Integrated workflow'] },
+        { id: 'ppl_ci', title: 'Continuous Improvement', levels: ['No improvement process','Reactive improvements','Regular improvements','Continuous digital improvement'] }
       ]
     }
   ],
-
-  /* ==========================================
-     RECOMMENDATIONS — per topic
-     ========================================== */
   recommendations: {
-    cad: {
-      title: 'Improve CAD-led Product Definition',
-      text: 'Transition to a 3D-led design methodology with structured GD&T application. Invest in training for Model Based Definition (MBD/PMI) to reduce drawing-dependent workflows. Ensure CAD models are consistently structured for direct downstream use in CAM and metrology, eliminating manual repair steps and translation overhead.'
-    },
-    cam: {
-      title: 'Standardise CAM Programming & Tooling Infrastructure',
-      text: 'Establish a company-wide CAM standard with formal naming conventions, reusable strategy templates, and a centralised tool library linked to machine databases. Implement cutting data management with structured feedback loops. Introduce machine-level simulation to reduce prove-out time and improve first-article success rates.'
-    },
-    shopfloor: {
-      title: 'Digitise Shopfloor Execution & Program Flow',
-      text: 'Replace USB-based program distribution with a centralised DNC or MES-integrated system. Introduce digital setup documentation linked to specific NC programs. Implement pre-setting stations with digital tool data transfer to machines, and deploy monitoring software to enable production analytics and reduce unplanned downtime.'
-    },
-    metrology: {
-      title: 'Integrate CAD-driven Inspection & Close the Quality Loop',
-      text: 'Move from manual gauging to CAD-based CMM inspection programming. Introduce a central measurement data system to enable traceability and trend analysis. Establish a closed-loop feedback process from inspection results back to CAM and production, enabling proactive process correction rather than reactive quality control.'
-    },
-    people: {
-      title: 'Build Knowledge Management & Cross-functional Capability',
-      text: 'Develop a structured training programme that covers CAM, machine operation, and digital tools. Introduce documented process standards and a knowledge base to reduce dependency on individual expertise. Foster cross-departmental coordination between design, programming, production, and quality to create integrated digital workflows rather than siloed processes.'
-    }
+    cad: { title: 'Improve CAD-led Product Definition', text: 'Transition to a 3D-led design methodology with structured GD&T application. Invest in training for Model Based Definition (MBD/PMI) to reduce drawing-dependent workflows. Ensure CAD models are consistently structured for direct downstream use in CAM and metrology, eliminating manual repair steps and translation overhead.' },
+    cam: { title: 'Standardise CAM Programming & Tooling Infrastructure', text: 'Establish a company-wide CAM standard with formal naming conventions, reusable strategy templates, and a centralised tool library linked to machine databases. Implement cutting data management with structured feedback loops. Introduce machine-level simulation to reduce prove-out time and improve first-article success rates.' },
+    shopfloor: { title: 'Digitise Shopfloor Execution & Program Flow', text: 'Replace USB-based program distribution with a centralised DNC or MES-integrated system. Introduce digital setup documentation linked to specific NC programs. Implement pre-setting stations with digital tool data transfer to machines, and deploy monitoring software to enable production analytics and reduce unplanned downtime.' },
+    metrology: { title: 'Integrate CAD-driven Inspection & Close the Quality Loop', text: 'Move from manual gauging to CAD-based CMM inspection programming. Introduce a central measurement data system to enable traceability and trend analysis. Establish a closed-loop feedback process from inspection results back to CAM and production, enabling proactive process correction rather than reactive quality control.' },
+    people: { title: 'Build Knowledge Management & Cross-functional Capability', text: 'Develop a structured training programme that covers CAM, machine operation, and digital tools. Introduce documented process standards and a knowledge base to reduce dependency on individual expertise. Foster cross-departmental coordination between design, programming, production, and quality to create integrated digital workflows rather than siloed processes.' }
   }
 };
 
-/* ============================================================
-   STATE MANAGEMENT
-   ============================================================ */
-// currentScan holds the live scan being worked on
-let currentScan = {
-  id: null,
-  company: {},
-  scores: {},
-  createdAt: null,
-  updatedAt: null
-};
-
+let currentScan = { id: null, company: {}, scores: {}, createdAt: null, updatedAt: null };
 let savedScans = [];
 let saveTimer = null;
 let currentView = 'home';
 
-/* ============================================================
-   LOCAL STORAGE HELPERS
-   ============================================================ */
 const LS_KEY_CURRENT = 'dmrs_current_scan';
 const LS_KEY_SAVED   = 'dmrs_saved_scans';
 
@@ -2460,9 +2152,8 @@ function saveCurrentToStorage() {
 }
 
 function saveSavedScans() {
-  try {
-    localStorage.setItem(LS_KEY_SAVED, JSON.stringify(savedScans));
-  } catch(e) { console.warn('Saved scans storage error', e); }
+  try { localStorage.setItem(LS_KEY_SAVED, JSON.stringify(savedScans)); }
+  catch(e) { console.warn('Saved scans storage error', e); }
 }
 
 function scheduleSave() {
@@ -2485,35 +2176,20 @@ function setSaveStatus(state) {
   }
 }
 
-/* ============================================================
-   SCAN LIFECYCLE
-   ============================================================ */
 function startNewScan() {
   if (currentScan.id && hasAnyData()) {
-    showModal(
-      'Save Current Scan First?',
-      'You have an active scan. Save it before starting a new one, or discard it.',
-      [
-        { label: 'Save & Start New', action: () => { saveCurrentScan(); _newScan(); closeModal(); }},
-        { label: 'Discard & Start New', cls: 'btn-danger', action: () => { _newScan(); closeModal(); }}
-      ]
-    );
+    showModal('Save Current Scan First?', 'You have an active scan. Save it before starting a new one, or discard it.', [
+      { label: 'Save & Start New', action: () => { saveCurrentScan(); _newScan(); closeModal(); }},
+      { label: 'Discard & Start New', cls: 'btn-danger', action: () => { _newScan(); closeModal(); }}
+    ]);
     return;
   }
   _newScan();
 }
 
 function _newScan() {
-  currentScan = {
-    id: 'scan_' + Date.now(),
-    company: {},
-    scores: {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  // Set today's date
-  const today = new Date().toISOString().substring(0, 10);
-  currentScan.company.date = today;
+  currentScan = { id: 'scan_' + Date.now(), company: {}, scores: {}, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  currentScan.company.date = new Date().toISOString().substring(0, 10);
   saveCurrentToStorage();
   populateCompanyForm();
   populateAuditTopics();
@@ -2534,11 +2210,8 @@ function saveCurrentScan() {
   const existing = savedScans.findIndex(s => s.id === currentScan.id);
   const snapshot = JSON.parse(JSON.stringify(currentScan));
   snapshot.displayName = name + (date ? ' — ' + date : '');
-  if (existing >= 0) {
-    savedScans[existing] = snapshot;
-  } else {
-    savedScans.unshift(snapshot);
-  }
+  if (existing >= 0) savedScans[existing] = snapshot;
+  else savedScans.unshift(snapshot);
   saveSavedScans();
   showToast('Scan saved.');
   updateHomeStats();
@@ -2556,22 +2229,18 @@ function loadScan(id) {
 }
 
 function deleteScan(id) {
-  showModal(
-    'Delete Scan?',
-    'This will permanently remove the saved scan. This action cannot be undone.',
-    [
-      { label: 'Delete', cls: 'btn-danger', action: () => {
-        savedScans = savedScans.filter(s => s.id !== id);
-        saveSavedScans();
-        if (currentScan.id === id) currentScan = { id: null, company: {}, scores: {} };
-        saveCurrentToStorage();
-        renderScansList();
-        closeModal();
-        showToast('Scan deleted.');
-        updateHomeStats();
-      }}
-    ]
-  );
+  showModal('Delete Scan?', 'This will permanently remove the saved scan. This action cannot be undone.', [
+    { label: 'Delete', cls: 'btn-danger', action: () => {
+      savedScans = savedScans.filter(s => s.id !== id);
+      saveSavedScans();
+      if (currentScan.id === id) currentScan = { id: null, company: {}, scores: {} };
+      saveCurrentToStorage();
+      renderScansList();
+      closeModal();
+      showToast('Scan deleted.');
+      updateHomeStats();
+    }}
+  ]);
 }
 
 function hasAnyData() {
@@ -2580,9 +2249,6 @@ function hasAnyData() {
   return false;
 }
 
-/* ============================================================
-   NAVIGATION
-   ============================================================ */
 function navigateTo(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -2602,14 +2268,10 @@ function navigateTo(view) {
   window.scrollTo(0, 0);
 }
 
-// Nav tab clicks
 document.querySelectorAll('.nav-tab').forEach(t => {
   t.addEventListener('click', () => navigateTo(t.dataset.view));
 });
 
-/* ============================================================
-   COMPANY FORM
-   ============================================================ */
 function populateCompanyForm() {
   const c = currentScan.company || {};
   document.querySelectorAll('[data-field]').forEach(el => {
@@ -2617,23 +2279,9 @@ function populateCompanyForm() {
     if (c[f] !== undefined && c[f] !== null && !Array.isArray(c[f])) el.value = c[f];
     else if (!Array.isArray(c[f])) el.value = '';
   });
-  // Restore toggle states
   _setToggleUI('design',    c.design    === 'yes');
   _setToggleUI('metrology', c.metrology === 'yes');
   populateMultiSelects();
-}
-
-function selectRadio(groupId, value) {
-  document.querySelectorAll(`#${groupId} .radio-option`).forEach(o => {
-    o.classList.toggle('selected', o.dataset.value === value);
-  });
-  const field = groupId === 'rg-design' ? 'design' : groupId;
-  if (!currentScan.company) currentScan.company = {};
-  currentScan.company[field] = value;
-  scheduleSave();
-  // Update CAD topic visibility
-  updateCadTopicVisibility();
-  updateTopicNav();
 }
 
 function _setToggleUI(field, isOn) {
@@ -2650,22 +2298,16 @@ function onToggleChange(field, isOn) {
   scheduleSave();
   updateCadTopicVisibility();
   updateTopicNav();
-  if (document.getElementById('topic-cards-container').children.length) {
-    populateAuditTopics();
-  }
+  if (document.getElementById('topic-cards-container').children.length) populateAuditTopics();
 }
 
-// Listen for company form changes
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.field) {
     if (!currentScan.company) currentScan.company = {};
     currentScan.company[el.dataset.field] = el.value;
     scheduleSave();
-    if (el.dataset.field === 'design') {
-      updateCadTopicVisibility();
-      updateTopicNav();
-    }
+    if (el.dataset.field === 'design') { updateCadTopicVisibility(); updateTopicNav(); }
   }
 });
 document.addEventListener('input', e => {
@@ -2679,35 +2321,20 @@ document.addEventListener('input', e => {
 
 function updateCadTopicVisibility() {
   const c = currentScan.company || {};
-  // CAD: visible only when design === 'yes'
   const cadCard = document.querySelector('[data-topic-id="cad"]');
-  if (cadCard) {
-    const cadNA = !['yes', 'partly'].includes(c.design || '');
-    cadCard.classList.toggle('hidden', cadNA && (c.design || '') !== '');
-  }
-  // Metrology: visible only when metrology === 'yes'
+  if (cadCard) { const cadNA = !['yes', 'partly'].includes(c.design || ''); cadCard.classList.toggle('hidden', cadNA && (c.design || '') !== ''); }
   const metCard = document.querySelector('[data-topic-id="metrology"]');
-  if (metCard) {
-    const metNA = c.metrology !== 'yes';
-    metCard.classList.toggle('hidden', metNA && (c.metrology || '') !== '');
-  }
+  if (metCard) { const metNA = c.metrology !== 'yes'; metCard.classList.toggle('hidden', metNA && (c.metrology || '') !== ''); }
 }
 
-/* ============================================================
-   AUDIT RENDERING
-   ============================================================ */
 function populateAuditTopics() {
   const container = document.getElementById('topic-cards-container');
   container.innerHTML = '';
-
   APP_CONFIG.topics.forEach((topic, idx) => {
     const card = document.createElement('div');
     card.className = 'topic-card open';
     card.dataset.topicId = topic.id;
-
     const isNA = isTopicNA(topic);
-
-    // Header
     const header = document.createElement('div');
     header.className = 'topic-card-header';
     header.innerHTML = `
@@ -2722,31 +2349,19 @@ function populateAuditTopics() {
       </div>
       <span class="topic-card-chevron">▾</span>
     `;
-    header.onclick = () => {
-      card.classList.toggle('open');
-    };
-
+    header.onclick = () => card.classList.toggle('open');
     const body = document.createElement('div');
     body.className = 'topic-card-body';
-
     if (isNA) {
-      body.innerHTML = `
-        <div class="topic-na-badge">
-          ⊘ Dit topic is niet van toepassing en wordt uitgesloten van de totaalscore.
-        </div>`;
+      body.innerHTML = `<div class="topic-na-badge">⊘ Dit topic is niet van toepassing en wordt uitgesloten van de totaalscore.</div>`;
     } else {
-      topic.params.forEach(param => {
-        body.appendChild(buildParamBlock(topic.id, param));
-      });
+      topic.params.forEach(param => body.appendChild(buildParamBlock(topic.id, param)));
     }
-
     card.appendChild(header);
     card.appendChild(body);
     container.appendChild(card);
-
     if (isNA) card.classList.add('na-topic');
   });
-
   buildTopicNav();
   updateTopicNav();
   updateProgress();
@@ -2755,7 +2370,7 @@ function populateAuditTopics() {
 function isTopicNA(topic) {
   if (!topic.applicabilityField) return false;
   const val = (currentScan.company || {})[topic.applicabilityField];
-  if (!val) return true; // not set = treat as N/A (toggle not yet activated)
+  if (!val) return true;
   return !topic.applicabilityValues.includes(val);
 }
 
@@ -2764,40 +2379,26 @@ function buildParamBlock(topicId, param) {
   const currentScore = (currentScan.scores[topicId] || {})[param.id];
   div.className = 'parameter-block' + (currentScore !== undefined ? ` scored scored-${currentScore}` : '');
   div.id = `param-block-${param.id}`;
-
   const scores = document.createElement('div');
   scores.className = 'score-descriptions';
-
   param.levels.forEach((desc, score) => {
     const item = document.createElement('div');
     item.className = 'score-desc-item' + (currentScore === score ? ' selected' : '');
     item.dataset.score = score;
-    item.innerHTML = `
-      <div class="score-desc-label">
-        <div class="score-badge">${score}</div>
-        Level ${score}
-      </div>
-      <div class="score-desc-text">${desc}</div>
-    `;
+    item.innerHTML = `<div class="score-desc-label"><div class="score-badge">${score}</div>Level ${score}</div><div class="score-desc-text">${desc}</div>`;
     item.addEventListener('click', () => selectScore(topicId, param.id, score, div, scores));
     scores.appendChild(item);
   });
-
   div.innerHTML = `<div class="param-title">${param.title}</div>`;
   div.appendChild(scores);
   return div;
 }
 
 function selectScore(topicId, paramId, score, block, scoresEl) {
-  // Update model
   if (!currentScan.scores[topicId]) currentScan.scores[topicId] = {};
   currentScan.scores[topicId][paramId] = score;
   scheduleSave();
-
-  // Update UI
-  scoresEl.querySelectorAll('.score-desc-item').forEach(i => {
-    i.classList.toggle('selected', parseInt(i.dataset.score) === score);
-  });
+  scoresEl.querySelectorAll('.score-desc-item').forEach(i => i.classList.toggle('selected', parseInt(i.dataset.score) === score));
   block.className = `parameter-block scored scored-${score}`;
   updateTopicPill(topicId);
   updateTopicNav();
@@ -2823,33 +2424,22 @@ function getOverallScore() {
 
 function getMaturityLevel(score) {
   if (score === null || score === undefined) return APP_CONFIG.maturityLevels[0];
-  for (const lvl of APP_CONFIG.maturityLevels) {
-    if (score >= lvl.min && score <= lvl.max) return lvl;
-  }
+  for (const lvl of APP_CONFIG.maturityLevels) { if (score >= lvl.min && score <= lvl.max) return lvl; }
   if (score > 3) return APP_CONFIG.maturityLevels[3];
   return APP_CONFIG.maturityLevels[0];
 }
 
 function getScoreColor(score) {
   if (score === null || score === undefined) return '#9CA3AF';
-  const lvl = getMaturityLevel(score);
-  return lvl.color;
+  return getMaturityLevel(score).color;
 }
 
 function updateTopicPill(topicId) {
   const pill = document.getElementById(`pill-${topicId}`);
   if (!pill) return;
   const score = getTopicScore(topicId);
-  if (score === null) {
-    pill.textContent = '—';
-    pill.style.background = '#F3F4F6';
-    pill.style.color = '#6B7280';
-  } else {
-    pill.textContent = score.toFixed(2);
-    const lvl = getMaturityLevel(score);
-    pill.style.background = lvl.color + '22';
-    pill.style.color = lvl.color;
-  }
+  if (score === null) { pill.textContent = '—'; pill.style.background = '#F3F4F6'; pill.style.color = '#6B7280'; }
+  else { pill.textContent = score.toFixed(2); const lvl = getMaturityLevel(score); pill.style.background = lvl.color + '22'; pill.style.color = lvl.color; }
 }
 
 function buildTopicNav() {
@@ -2859,14 +2449,8 @@ function buildTopicNav() {
     const item = document.createElement('div');
     item.className = 'topic-nav-item';
     item.id = `tnav-${topic.id}`;
-    item.innerHTML = `
-      <div class="topic-nav-indicator"></div>
-      <div class="topic-nav-name">${topic.title}</div>
-      <div class="topic-nav-score" id="tnav-score-${topic.id}">—</div>
-    `;
-    item.onclick = () => {
-      document.getElementById(`param-block-${topic.params[0]?.id}`)?.scrollIntoView({ behavior: 'smooth' });
-    };
+    item.innerHTML = `<div class="topic-nav-indicator"></div><div class="topic-nav-name">${topic.title}</div><div class="topic-nav-score" id="tnav-score-${topic.id}">—</div>`;
+    item.onclick = () => document.getElementById(`param-block-${topic.params[0]?.id}`)?.scrollIntoView({ behavior: 'smooth' });
     nav.appendChild(item);
   });
 }
@@ -2876,40 +2460,19 @@ function updateTopicNav() {
     const item = document.getElementById(`tnav-${topic.id}`);
     const scoreEl = document.getElementById(`tnav-score-${topic.id}`);
     if (!item) return;
-
-    if (isTopicNA(topic)) {
-      item.className = 'topic-nav-item na';
-      if (scoreEl) scoreEl.textContent = 'N/A';
-      return;
-    }
-
+    if (isTopicNA(topic)) { item.className = 'topic-nav-item na'; if (scoreEl) scoreEl.textContent = 'N/A'; return; }
     const score = getTopicScore(topic.id);
     const totalParams = topic.params.length;
     const scoredParams = Object.keys(currentScan.scores[topic.id] || {}).length;
-
-    if (score !== null) {
-      item.className = scoredParams === totalParams ? 'topic-nav-item completed' : 'topic-nav-item partial';
-      if (scoreEl) scoreEl.textContent = score.toFixed(2);
-    } else {
-      item.className = 'topic-nav-item';
-      if (scoreEl) scoreEl.textContent = '—';
-    }
-
+    if (score !== null) { item.className = scoredParams === totalParams ? 'topic-nav-item completed' : 'topic-nav-item partial'; if (scoreEl) scoreEl.textContent = score.toFixed(2); }
+    else { item.className = 'topic-nav-item'; if (scoreEl) scoreEl.textContent = '—'; }
     updateTopicPill(topic.id);
   });
 }
 
 function updateProgress() {
-  const allParams = APP_CONFIG.topics
-    .filter(t => !isTopicNA(t))
-    .flatMap(t => t.params);
-  const scored = allParams.filter(p => {
-    const topicScores = currentScan.scores;
-    for (const tid in topicScores) {
-      if (topicScores[tid][p.id] !== undefined) return true;
-    }
-    return false;
-  });
+  const allParams = APP_CONFIG.topics.filter(t => !isTopicNA(t)).flatMap(t => t.params);
+  const scored = allParams.filter(p => { const topicScores = currentScan.scores; for (const tid in topicScores) { if (topicScores[tid][p.id] !== undefined) return true; } return false; });
   const pct = allParams.length ? Math.round(scored.length / allParams.length * 100) : 0;
   const bar = document.getElementById('progress-bar');
   const pctEl = document.getElementById('progress-pct');
@@ -2917,200 +2480,82 @@ function updateProgress() {
   if (pctEl) pctEl.textContent = pct + '%';
 }
 
-/* ============================================================
-   DASHBOARD
-   ============================================================ */
 function buildDashboard() {
   const overall = getOverallScore();
   const lvl = getMaturityLevel(overall);
-
-  // Score hero
   const hero = document.getElementById('score-hero');
   hero.className = 'score-hero ' + (overall !== null ? lvl.class : '');
   hero.querySelector('.score-hero-value').textContent = overall !== null ? overall.toFixed(2) : '—';
   hero.querySelector('.score-hero-label').textContent = lvl.label;
   hero.querySelector('.score-hero-pct').textContent = overall !== null ? Math.round(overall/3*100) + '%' : '—';
-
-  // Company name
   const cname = document.getElementById('dashboard-company-name');
   if (cname) cname.textContent = currentScan.company?.company ? `${currentScan.company.company} — Score overview and analysis.` : 'Score overview and analysis.';
-
-  // Topic cards
   const grid = document.getElementById('topic-scores-grid');
   grid.innerHTML = '';
   const applicable = APP_CONFIG.topics.filter(t => !isTopicNA(t));
-  const sortedByScore = [...applicable]
-    .map(t => ({ topic: t, score: getTopicScore(t.id) }))
-    .sort((a,b) => (b.score ?? -1) - (a.score ?? -1));
-
+  const sortedByScore = [...applicable].map(t => ({ topic: t, score: getTopicScore(t.id) })).sort((a,b) => (b.score ?? -1) - (a.score ?? -1));
   APP_CONFIG.topics.forEach(topic => {
     const score = getTopicScore(topic.id);
     const na = isTopicNA(topic);
     const lvlT = na ? null : getMaturityLevel(score);
     const scoreClass = na ? 'na' : (score === null ? 'na' : Math.round(score));
-
     const card = document.createElement('div');
     card.className = `topic-score-card score-${scoreClass}`;
-    card.innerHTML = `
-      <div class="topic-score-card-name">${topic.title}</div>
-      <div class="topic-score-card-value">${na ? 'N/A' : (score !== null ? score.toFixed(2) : '—')}</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${na ? 'Not applicable' : (lvlT ? lvlT.label : 'Not scored')}</div>
-      <div class="topic-bar-outer">
-        <div class="topic-bar-inner" style="width:${na ? 0 : (score !== null ? score/3*100 : 0)}%; background:${na ? '#E5E7EB' : (lvlT ? lvlT.color : '#E5E7EB')}"></div>
-      </div>
-    `;
+    card.innerHTML = `<div class="topic-score-card-name">${topic.title}</div><div class="topic-score-card-value">${na ? 'N/A' : (score !== null ? score.toFixed(2) : '—')}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">${na ? 'Not applicable' : (lvlT ? lvlT.label : 'Not scored')}</div><div class="topic-bar-outer"><div class="topic-bar-inner" style="width:${na ? 0 : (score !== null ? score/3*100 : 0)}%; background:${na ? '#E5E7EB' : (lvlT ? lvlT.color : '#E5E7EB')}"></div></div>`;
     grid.appendChild(card);
   });
-
-  // Strengths / weaknesses
   const strong = sortedByScore.filter(x => x.score !== null).slice(0, 2);
   const weak = [...sortedByScore].reverse().filter(x => x.score !== null).slice(0, 2);
-
   const sl = document.getElementById('strengths-list');
-  sl.innerHTML = strong.length ? strong.map(x => `
-    <div class="insight-item">
-      <div class="insight-icon strong">▲</div>
-      <div>
-        <div class="insight-topic">${x.topic.title}</div>
-        <div class="insight-score">${x.score.toFixed(2)} / 3.00 — ${getMaturityLevel(x.score).label}</div>
-      </div>
-    </div>
-  `).join('') : '<div class="text-muted text-small" style="padding:8px 0">Complete the audit to see insights.</div>';
-
+  sl.innerHTML = strong.length ? strong.map(x => `<div class="insight-item"><div class="insight-icon strong">▲</div><div><div class="insight-topic">${x.topic.title}</div><div class="insight-score">${x.score.toFixed(2)} / 3.00 — ${getMaturityLevel(x.score).label}</div></div></div>`).join('') : '<div class="text-muted text-small" style="padding:8px 0">Complete the audit to see insights.</div>';
   const wl = document.getElementById('weaknesses-list');
-  wl.innerHTML = weak.length ? weak.map(x => `
-    <div class="insight-item">
-      <div class="insight-icon weak">▼</div>
-      <div>
-        <div class="insight-topic">${x.topic.title}</div>
-        <div class="insight-score">${x.score.toFixed(2)} / 3.00 — ${getMaturityLevel(x.score).label}</div>
-      </div>
-    </div>
-  `).join('') : '<div class="text-muted text-small" style="padding:8px 0">Complete the audit to see insights.</div>';
-
-  // Recommendations
+  wl.innerHTML = weak.length ? weak.map(x => `<div class="insight-item"><div class="insight-icon weak">▼</div><div><div class="insight-topic">${x.topic.title}</div><div class="insight-score">${x.score.toFixed(2)} / 3.00 — ${getMaturityLevel(x.score).label}</div></div></div>`).join('') : '<div class="text-muted text-small" style="padding:8px 0">Complete the audit to see insights.</div>';
   buildRecommendations('recommendations-list', true);
-
-  // Charts
-  setTimeout(() => {
-    drawRadarChart('radar-chart-dash', 280);
-    drawBarChart('bar-chart-dash', 280);
-  }, 50);
+  setTimeout(() => { drawRadarChart('radar-chart-dash', 280); drawBarChart('bar-chart-dash', 280); }, 50);
 }
 
 function buildRecommendations(containerId, full) {
   const container = document.getElementById(containerId);
   if (!container) return;
   const applicable = APP_CONFIG.topics.filter(t => !isTopicNA(t));
-  const sorted = applicable
-    .map(t => ({ id: t.id, score: getTopicScore(t.id) ?? 0 }))
-    .sort((a,b) => a.score - b.score)
-    .slice(0, full ? 5 : 3);
-
+  const sorted = applicable.map(t => ({ id: t.id, score: getTopicScore(t.id) ?? 0 })).sort((a,b) => a.score - b.score).slice(0, full ? 5 : 3);
   container.innerHTML = sorted.map((item, i) => {
     const reco = APP_CONFIG.recommendations[item.id];
     if (!reco) return '';
-    const topic = APP_CONFIG.topics.find(t => t.id === item.id);
-    return `
-      <div class="reco-item">
-        <div class="reco-number">${i+1}</div>
-        <div>
-          <div class="reco-content-title">${reco.title}</div>
-          <div class="reco-content-text">${reco.text}</div>
-        </div>
-      </div>
-    `;
+    return `<div class="reco-item"><div class="reco-number">${i+1}</div><div><div class="reco-content-title">${reco.title}</div><div class="reco-content-text">${reco.text}</div></div></div>`;
   }).join('');
-
-  if (!container.innerHTML.trim()) {
-    container.innerHTML = '<div class="text-muted text-small">Complete the audit to generate recommendations.</div>';
-  }
+  if (!container.innerHTML.trim()) container.innerHTML = '<div class="text-muted text-small">Complete the audit to generate recommendations.</div>';
 }
 
-/* ============================================================
-   CHARTS — lightweight canvas implementation
-   ============================================================ */
 function drawRadarChart(canvasId, size) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
   const applicable = APP_CONFIG.topics.filter(t => !isTopicNA(t));
   const N = applicable.length;
   if (N < 2) return;
-
-  const cx = size/2, cy = size/2;
-  const R = size/2 - 40;
-  const levels = 3;
+  const cx = size/2, cy = size/2, R = size/2 - 40, levels = 3;
   ctx.clearRect(0, 0, size, size);
-
-  // Grid
   for (let l = 1; l <= levels; l++) {
     const r = R * l / levels;
     ctx.beginPath();
-    for (let i = 0; i < N; i++) {
-      const angle = (Math.PI*2 * i / N) - Math.PI/2;
-      const x = cx + r * Math.cos(angle);
-      const y = cy + r * Math.sin(angle);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = '#E5E7EB';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    for (let i = 0; i < N; i++) { const angle = (Math.PI*2 * i / N) - Math.PI/2; const x = cx + r * Math.cos(angle); const y = cy + r * Math.sin(angle); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+    ctx.closePath(); ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1; ctx.stroke();
   }
-
-  // Spokes + labels
   applicable.forEach((topic, i) => {
     const angle = (Math.PI*2 * i / N) - Math.PI/2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
-    ctx.strokeStyle = '#E5E7EB';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    const lx = cx + (R + 22) * Math.cos(angle);
-    const ly = cy + (R + 22) * Math.sin(angle);
-    ctx.fillStyle = '#6B7280';
-    ctx.font = `500 10px DM Sans, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    // Wrap long label
-    const words = topic.title.split(/\s*&\s*|\s+/);
-    const line1 = words.slice(0, 2).join(' ');
-    const line2 = words.slice(2).join(' ');
-    ctx.fillText(line1, lx, ly - (line2 ? 7 : 0));
-    if (line2) ctx.fillText(line2, lx, ly + 7);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle)); ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1; ctx.stroke();
+    const lx = cx + (R + 22) * Math.cos(angle), ly = cy + (R + 22) * Math.sin(angle);
+    ctx.fillStyle = '#6B7280'; ctx.font = `500 10px DM Sans, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const words = topic.title.split(/\s*&\s*|\s+/); const line1 = words.slice(0, 2).join(' '); const line2 = words.slice(2).join(' ');
+    ctx.fillText(line1, lx, ly - (line2 ? 7 : 0)); if (line2) ctx.fillText(line2, lx, ly + 7);
   });
-
-  // Data polygon
   const scores = applicable.map(t => getTopicScore(t.id) ?? 0);
   ctx.beginPath();
-  scores.forEach((s, i) => {
-    const angle = (Math.PI*2 * i / N) - Math.PI/2;
-    const r = R * s / 3;
-    const x = cx + r * Math.cos(angle);
-    const y = cy + r * Math.sin(angle);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(26,86,219,0.1)';
-  ctx.fill();
-  ctx.strokeStyle = '#1A56DB';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Points
-  scores.forEach((s, i) => {
-    const angle = (Math.PI*2 * i / N) - Math.PI/2;
-    const r = R * s / 3;
-    ctx.beginPath();
-    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 4, 0, Math.PI*2);
-    ctx.fillStyle = '#1A56DB';
-    ctx.fill();
-  });
+  scores.forEach((s, i) => { const angle = (Math.PI*2 * i / N) - Math.PI/2; const r = R * s / 3; const x = cx + r * Math.cos(angle); const y = cy + r * Math.sin(angle); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+  ctx.closePath(); ctx.fillStyle = 'rgba(26,86,219,0.1)'; ctx.fill(); ctx.strokeStyle = '#1A56DB'; ctx.lineWidth = 2; ctx.stroke();
+  scores.forEach((s, i) => { const angle = (Math.PI*2 * i / N) - Math.PI/2; const r = R * s / 3; ctx.beginPath(); ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 4, 0, Math.PI*2); ctx.fillStyle = '#1A56DB'; ctx.fill(); });
 }
 
 function drawBarChart(canvasId, h) {
@@ -3119,101 +2564,49 @@ function drawBarChart(canvasId, h) {
   const applicable = APP_CONFIG.topics.filter(t => !isTopicNA(t));
   const N = applicable.length;
   const W = canvas.parentElement.offsetWidth || 400;
-  canvas.width = W;
-  canvas.height = h;
+  canvas.width = W; canvas.height = h;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, W, h);
-
   const padL = 16, padR = 16, padT = 12, padB = 48;
   const chartH = h - padT - padB;
   const barW = Math.floor((W - padL - padR) / N - 10);
   const gap = Math.floor((W - padL - padR - barW * N) / (N + 1));
   const maxVal = 3;
-
-  // Grid lines
   [0,1,2,3].forEach(v => {
     const y = padT + chartH - (v/maxVal) * chartH;
-    ctx.beginPath();
-    ctx.moveTo(padL, y);
-    ctx.lineTo(W - padR, y);
-    ctx.strokeStyle = v === 0 ? '#D1D5DB' : '#F3F4F6';
-    ctx.lineWidth = v === 0 ? 1.5 : 1;
-    ctx.stroke();
-    ctx.fillStyle = '#9CA3AF';
-    ctx.font = '500 10px DM Sans, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(v.toFixed(1), padL - 4, y + 4);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y);
+    ctx.strokeStyle = v === 0 ? '#D1D5DB' : '#F3F4F6'; ctx.lineWidth = v === 0 ? 1.5 : 1; ctx.stroke();
+    ctx.fillStyle = '#9CA3AF'; ctx.font = '500 10px DM Sans, sans-serif'; ctx.textAlign = 'right'; ctx.fillText(v.toFixed(1), padL - 4, y + 4);
   });
-
   applicable.forEach((topic, i) => {
     const score = getTopicScore(topic.id) ?? 0;
     const bh = (score / maxVal) * chartH;
     const x = padL + gap + i * (barW + gap);
     const y = padT + chartH - bh;
     const color = getScoreColor(score);
-
-    // Bar
     const r = 4;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + barW - r, y);
-    ctx.arcTo(x + barW, y, x + barW, y + r, r);
-    ctx.lineTo(x + barW, y + bh);
-    ctx.lineTo(x, y + bh);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
-    ctx.fillStyle = color + '33';
-    ctx.fill();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Value
-    ctx.fillStyle = color;
-    ctx.font = '600 11px DM Mono, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(score > 0 ? score.toFixed(1) : '—', x + barW/2, y - 5);
-
-    // Label
-    const words = topic.title.split(/\s+/);
-    const l1 = words.slice(0, 2).join(' ');
-    const l2 = words.slice(2).join(' ');
-    ctx.fillStyle = '#6B7280';
-    ctx.font = '500 10px DM Sans, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(l1, x + barW/2, padT + chartH + 14);
-    if (l2) ctx.fillText(l2, x + barW/2, padT + chartH + 26);
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + barW - r, y); ctx.arcTo(x + barW, y, x + barW, y + r, r); ctx.lineTo(x + barW, y + bh); ctx.lineTo(x, y + bh); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
+    ctx.fillStyle = color + '33'; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = color; ctx.font = '600 11px DM Mono, monospace'; ctx.textAlign = 'center'; ctx.fillText(score > 0 ? score.toFixed(1) : '—', x + barW/2, y - 5);
+    const words = topic.title.split(/\s+/); const l1 = words.slice(0, 2).join(' '); const l2 = words.slice(2).join(' ');
+    ctx.fillStyle = '#6B7280'; ctx.font = '500 10px DM Sans, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(l1, x + barW/2, padT + chartH + 14); if (l2) ctx.fillText(l2, x + barW/2, padT + chartH + 26);
   });
 }
 
-/* ============================================================
-   REPORT BUILDER
-   ============================================================ */
 function buildReport() {
   const c = currentScan.company || {};
   const overall = getOverallScore();
   const lvl = getMaturityLevel(overall);
-
-  // Cover
   document.getElementById('rc-company').textContent = c.company || 'Company Name';
   document.getElementById('rc-industry').textContent = [getMultiSelectDisplayValue('industry'), c.prodtype].filter(Boolean).join(' — ');
   document.getElementById('rc-contact').textContent = [c.contact, c.function].filter(Boolean).join(', ') || '—';
   document.getElementById('rc-date').textContent = c.date ? new Date(c.date).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) : '—';
   document.getElementById('rc-score').textContent = overall !== null ? overall.toFixed(2) + ' / 3.00' : '—';
   document.getElementById('rc-label').textContent = lvl.label;
-
-  // Big score
   const rsb = document.getElementById('rpt-score-big');
-  rsb.innerHTML = `
-    <div class="report-score-big-value" style="color:${lvl.color}">${overall !== null ? overall.toFixed(2) : '—'}</div>
-    <div class="report-score-big-label" style="background:${lvl.color}22; color:${lvl.color}">${lvl.label}</div>
-  `;
-
-  // Exec text
+  rsb.innerHTML = `<div class="report-score-big-value" style="color:${lvl.color}">${overall !== null ? overall.toFixed(2) : '—'}</div><div class="report-score-big-label" style="background:${lvl.color}22; color:${lvl.color}">${lvl.label}</div>`;
   document.getElementById('rpt-exec-text').innerHTML = buildExecText(overall, lvl, c);
-
-  // Topic table
   const tbody = document.getElementById('rpt-topic-tbody');
   tbody.innerHTML = '';
   APP_CONFIG.topics.forEach(topic => {
@@ -3221,130 +2614,44 @@ function buildReport() {
     const na = isTopicNA(topic);
     const lvlT = na ? null : getMaturityLevel(score);
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="font-weight:600">${topic.title}</td>
-      <td style="font-family:var(--font-mono); font-weight:600; color:${na ? '#9CA3AF' : (score !== null ? lvlT.color : '#9CA3AF')}">${na ? 'N/A' : (score !== null ? score.toFixed(2) : '—')}</td>
-      <td><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:100px;background:${na ? '#F3F4F6' : (lvlT ? lvlT.color+'22' : '#F3F4F6')};color:${na ? '#9CA3AF' : (lvlT ? lvlT.color : '#9CA3AF')}">${na ? 'Not Applicable' : (lvlT ? lvlT.label : 'Not scored')}</span></td>
-      <td>
-        <div class="report-bar">
-          <div class="report-bar-fill" style="width:${na ? 0 : (score !== null ? score/3*100 : 0)}%; background:${na ? '#E5E7EB' : (lvlT ? lvlT.color : '#E5E7EB')}"></div>
-        </div>
-      </td>
-      <td style="font-size:11px;color:var(--text-muted)">${na ? 'Excluded from score' : (score !== null ? Math.round(score/3*100)+'%' : 'Incomplete')}</td>
-    `;
+    tr.innerHTML = `<td style="font-weight:600">${topic.title}</td><td style="font-family:var(--font-mono); font-weight:600; color:${na ? '#9CA3AF' : (score !== null ? lvlT.color : '#9CA3AF')}">${na ? 'N/A' : (score !== null ? score.toFixed(2) : '—')}</td><td><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:100px;background:${na ? '#F3F4F6' : (lvlT ? lvlT.color+'22' : '#F3F4F6')};color:${na ? '#9CA3AF' : (lvlT ? lvlT.color : '#9CA3AF')}">${na ? 'Not Applicable' : (lvlT ? lvlT.label : 'Not scored')}</span></td><td><div class="report-bar"><div class="report-bar-fill" style="width:${na ? 0 : (score !== null ? score/3*100 : 0)}%; background:${na ? '#E5E7EB' : (lvlT ? lvlT.color : '#E5E7EB')}"></div></div></td><td style="font-size:11px;color:var(--text-muted)">${na ? 'Excluded from score' : (score !== null ? Math.round(score/3*100)+'%' : 'Incomplete')}</td>`;
     tbody.appendChild(tr);
   });
-
-  // Recommendations
   const rptReco = document.getElementById('rpt-recommendations');
   const applicable = APP_CONFIG.topics.filter(t => !isTopicNA(t));
-  const sorted = applicable
-    .map(t => ({ id: t.id, score: getTopicScore(t.id) ?? 0 }))
-    .sort((a,b) => a.score - b.score)
-    .slice(0, 5);
-  rptReco.innerHTML = sorted.map((item, i) => {
-    const reco = APP_CONFIG.recommendations[item.id];
-    if (!reco) return '';
-    return `
-      <div class="report-reco-item">
-        <div class="report-reco-num">${i+1}</div>
-        <div>
-          <div class="report-reco-title">${reco.title}</div>
-          <div class="report-reco-text">${reco.text}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // Company details
+  const sorted = applicable.map(t => ({ id: t.id, score: getTopicScore(t.id) ?? 0 })).sort((a,b) => a.score - b.score).slice(0, 5);
+  rptReco.innerHTML = sorted.map((item, i) => { const reco = APP_CONFIG.recommendations[item.id]; if (!reco) return ''; return `<div class="report-reco-item"><div class="report-reco-num">${i+1}</div><div><div class="report-reco-title">${reco.title}</div><div class="report-reco-text">${reco.text}</div></div></div>`; }).join('');
   const det = document.getElementById('rpt-company-details');
-  const fields = [
-    ['Company', c.company], ['Contact', c.contact], ['Function', c.function],
-    ['Date', c.date], ['Size', c.size], ['Industry', getMultiSelectDisplayValue('industry')],
-    ['CNC Machines', c.machines], ['Machine Types', getMultiSelectDisplayValue('machinetypes')],
-    ['Production Type', c.prodtype], ['Does product design?', c.design],
-    ['CAD Software', getMultiSelectDisplayValue('cad')], ['CAM Software', getMultiSelectDisplayValue('cam')],
-    ['Metrology Software', getMultiSelectDisplayValue('metro')], ['ERP/PDM/PLM', getMultiSelectDisplayValue('pdm')]
-  ];
-  det.innerHTML = fields.filter(f => f[1]).map(f => `
-    <div style="padding:6px 0; border-bottom:1px solid var(--border)">
-      <span style="font-size:11px;font-weight:600;color:var(--text-muted);display:block">${f[0]}</span>
-      <span style="font-size:13px;color:var(--text-primary);font-weight:500">${f[1]}</span>
-    </div>
-  `).join('');
-
+  const fields = [['Company', c.company], ['Contact', c.contact], ['Function', c.function], ['Date', c.date], ['Size', c.size], ['Industry', getMultiSelectDisplayValue('industry')], ['CNC Machines', c.machines], ['Machine Types', getMultiSelectDisplayValue('machinetypes')], ['Production Type', c.prodtype], ['Does product design?', c.design], ['CAD Software', getMultiSelectDisplayValue('cad')], ['CAM Software', getMultiSelectDisplayValue('cam')], ['Metrology Software', getMultiSelectDisplayValue('metro')], ['ERP/PDM/PLM', getMultiSelectDisplayValue('pdm')]];
+  det.innerHTML = fields.filter(f => f[1]).map(f => `<div style="padding:6px 0; border-bottom:1px solid var(--border)"><span style="font-size:11px;font-weight:600;color:var(--text-muted);display:block">${f[0]}</span><span style="font-size:13px;color:var(--text-primary);font-weight:500">${f[1]}</span></div>`).join('');
   document.getElementById('rpt-footer-note').textContent = `Assessment date: ${c.date || '—'} — Digital Machinist Readiness Scan v1.0`;
-
-  setTimeout(() => {
-    drawRadarChart('radar-chart-report', 260);
-    drawBarChart('bar-chart-report', 260);
-  }, 80);
+  setTimeout(() => { drawRadarChart('radar-chart-report', 260); drawBarChart('bar-chart-report', 260); }, 80);
 }
 
 function buildExecText(overall, lvl, c) {
   const applicable = APP_CONFIG.topics.filter(t => !isTopicNA(t));
-  const sorted = applicable
-    .map(t => ({ title: t.title, score: getTopicScore(t.id) ?? 0 }))
-    .sort((a,b) => b.score - a.score);
-  const best = sorted[0];
-  const worst = sorted[sorted.length - 1];
-
+  const sorted = applicable.map(t => ({ title: t.title, score: getTopicScore(t.id) ?? 0 })).sort((a,b) => b.score - a.score);
+  const best = sorted[0]; const worst = sorted[sorted.length - 1];
   if (overall === null) return 'No scores have been entered yet. Complete the audit to generate the executive summary.';
-
   const pct = Math.round(overall / 3 * 100);
   let text = `<strong>${c.company || 'This company'}</strong> achieved an overall digital maturity score of <strong>${overall.toFixed(2)} / 3.00</strong> (${pct}%), placing it at the <strong>${lvl.label}</strong> maturity level. `;
-
-  if (lvl.label === 'Initial') {
-    text += 'The assessment reveals that digital workflows are largely absent or informal. Significant opportunities exist to introduce structured processes, tooling standards, and digital infrastructure across all domains.';
-  } else if (lvl.label === 'Emerging') {
-    text += 'The assessment reveals that some digital practices are in place, but are inconsistently applied and largely undocumented. Key opportunities exist to formalise standards, centralise tools, and build cross-functional digital capability.';
-  } else if (lvl.label === 'Structured') {
-    text += 'The assessment reveals a solid foundation of structured digital practices. The focus should now shift towards integration across domains, reduction of manual handoffs, and building towards closed-loop digital workflows.';
-  } else {
-    text += 'The assessment reveals a mature digital environment with well-integrated workflows. The focus should now be on optimisation, automation, and sustaining continuous improvement processes.';
-  }
-
-  if (best && worst && best.score !== worst.score) {
-    text += ` The strongest performing domain is <strong>${best.title}</strong> (${best.score.toFixed(2)}), while the area requiring most attention is <strong>${worst.title}</strong> (${worst.score.toFixed(2)}).`;
-  }
-
+  if (lvl.label === 'Initial') text += 'The assessment reveals that digital workflows are largely absent or informal. Significant opportunities exist to introduce structured processes, tooling standards, and digital infrastructure across all domains.';
+  else if (lvl.label === 'Emerging') text += 'The assessment reveals that some digital practices are in place, but are inconsistently applied and largely undocumented. Key opportunities exist to formalise standards, centralise tools, and build cross-functional digital capability.';
+  else if (lvl.label === 'Structured') text += 'The assessment reveals a solid foundation of structured digital practices. The focus should now shift towards integration across domains, reduction of manual handoffs, and building towards closed-loop digital workflows.';
+  else text += 'The assessment reveals a mature digital environment with well-integrated workflows. The focus should now be on optimisation, automation, and sustaining continuous improvement processes.';
+  if (best && worst && best.score !== worst.score) text += ` The strongest performing domain is <strong>${best.title}</strong> (${best.score.toFixed(2)}), while the area requiring most attention is <strong>${worst.title}</strong> (${worst.score.toFixed(2)}).`;
   return text;
 }
 
-/* ============================================================
-   SAVED SCANS LIST
-   ============================================================ */
 function renderScansList() {
   const list = document.getElementById('scans-list');
   if (!list) return;
-  if (!savedScans.length) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">◫</div>
-        <div class="empty-state-text">No saved scans yet</div>
-        <div class="empty-state-sub">Start a new scan to begin your first assessment.</div>
-      </div>
-    `;
-    return;
-  }
+  if (!savedScans.length) { list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◫</div><div class="empty-state-text">No saved scans yet</div><div class="empty-state-sub">Start a new scan to begin your first assessment.</div></div>`; return; }
   list.innerHTML = savedScans.map(scan => {
     const overall = calculateScanScore(scan);
     const lvl = getMaturityLevel(overall);
     const date = scan.company?.date ? new Date(scan.company.date).toLocaleDateString('en-GB') : '—';
-    return `
-      <div class="scan-item">
-        <div class="scan-item-icon">◎</div>
-        <div class="scan-item-info">
-          <div class="scan-item-name">${scan.company?.company || 'Unnamed Scan'}</div>
-          <div class="scan-item-meta">${date} · ${scan.company?.industry || 'No industry'} · ${scan.company?.size || ''}</div>
-        </div>
-        <div class="scan-item-score" style="background:${overall !== null ? lvl.color+'22' : '#F3F4F6'};color:${overall !== null ? lvl.color : '#9CA3AF'}">${overall !== null ? overall.toFixed(2) : '—'}</div>
-        <div class="scan-item-actions">
-          <button class="btn btn-secondary" style="font-size:12px" onclick="loadScan('${scan.id}')">Load</button>
-          <button class="btn btn-danger" style="font-size:12px" onclick="deleteScan('${scan.id}')">Delete</button>
-        </div>
-      </div>
-    `;
+    return `<div class="scan-item"><div class="scan-item-icon">◎</div><div class="scan-item-info"><div class="scan-item-name">${scan.company?.company || 'Unnamed Scan'}</div><div class="scan-item-meta">${date} · ${scan.company?.industry || 'No industry'} · ${scan.company?.size || ''}</div></div><div class="scan-item-score" style="background:${overall !== null ? lvl.color+'22' : '#F3F4F6'};color:${overall !== null ? lvl.color : '#9CA3AF'}">${overall !== null ? overall.toFixed(2) : '—'}</div><div class="scan-item-actions"><button class="btn btn-secondary" style="font-size:12px" onclick="loadScan('${scan.id}')">Load</button><button class="btn btn-danger" style="font-size:12px" onclick="deleteScan('${scan.id}')">Delete</button></div></div>`;
   }).join('');
 }
 
@@ -3356,154 +2663,38 @@ function calculateScanScore(scan) {
     if (!val) return true;
     return t.applicabilityValues.includes(val);
   });
-  const scores = applicable.map(topic => {
-    const tScores = scan.scores[topic.id] || {};
-    const vals = topic.params.map(p => tScores[p.id]).filter(v => v !== undefined && v !== null);
-    return vals.length ? vals.reduce((a,b) => a+b,0) / vals.length : null;
-  }).filter(v => v !== null);
+  const scores = applicable.map(topic => { const tScores = scan.scores[topic.id] || {}; const vals = topic.params.map(p => tScores[p.id]).filter(v => v !== undefined && v !== null); return vals.length ? vals.reduce((a,b) => a+b,0) / vals.length : null; }).filter(v => v !== null);
   return scores.length ? scores.reduce((a,b) => a+b,0) / scores.length : null;
 }
 
-/* ============================================================
-   MODAL HELPER
-   ============================================================ */
 function showModal(title, body, actions) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').textContent = body;
   const footer = document.querySelector('.modal-footer');
   footer.innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>';
-  if (actions) {
-    actions.forEach(a => {
-      const btn = document.createElement('button');
-      btn.className = 'btn ' + (a.cls || 'btn-primary');
-      btn.textContent = a.label;
-      btn.onclick = a.action;
-      footer.appendChild(btn);
-    });
-  }
+  if (actions) { actions.forEach(a => { const btn = document.createElement('button'); btn.className = 'btn ' + (a.cls || 'btn-primary'); btn.textContent = a.label; btn.onclick = a.action; footer.appendChild(btn); }); }
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.add('hidden');
-}
+function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
 
-/* ============================================================
-   TOAST
-   ============================================================ */
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-/* ============================================================
-   HOME STATS
-   ============================================================ */
-function updateHomeStats() {
-  const el = document.getElementById('stat-scans');
-  if (el) el.textContent = savedScans.length;
-}
+function updateHomeStats() { const el = document.getElementById('stat-scans'); if (el) el.textContent = savedScans.length; }
 
-/* ============================================================
-   INIT
-   ============================================================ */
-function init() {
-  loadFromStorage();
-  updateHomeStats();
-
-  // Set today's date default for new scans
-  const dateInput = document.getElementById('f-date');
-  if (dateInput && !dateInput.value) {
-    dateInput.value = new Date().toISOString().substring(0,10);
-  }
-
-  if (currentScan.id) {
-    populateCompanyForm();
-  }
-
-  setSaveStatus('saved');
-  navigateTo('home');
-}
-
-// Save scan button in nav - auto-save on any score/field change already handled
-// But add Save button logic here for manual save to saved list
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault();
-    saveCurrentScan();
-  }
-});
-
-// Window resize re-draw charts
-window.addEventListener('resize', () => {
-  if (currentView === 'dashboard') buildDashboard();
-  if (currentView === 'report') buildReport();
-});
-
-/* ============================================================
-   MULTI-SELECT WIDGET CONFIGURATION
-   Add or edit options here per field.
-   ============================================================ */
 const MULTISELECT_CONFIG = {
-  industry: {
-    containerId: 'ms-industry',
-    field: 'industry',
-    options: [
-      'Aerospace', 'Automotive', 'Medical / Medtech', 'Energy / Oil & Gas',
-      'Defence', 'Semiconductors', 'Mould & Die', 'General Machining',
-      'Marine', 'Rail', 'Electronics', 'Toolmaking'
-    ]
-  },
-  machinetypes: {
-    containerId: 'ms-machinetypes',
-    field: 'machinetypes',
-    options: [
-      '3-axis milling', '4-axis milling', '5-axis milling',
-      '2-axis turning', 'Turn-mill', 'Swiss-type turning',
-      'EDM wire', 'EDM sinker', 'Grinding', 'Gear cutting',
-      'Laser cutting', 'Waterjet', 'CMM'
-    ]
-  },
-  cad: {
-    containerId: 'ms-cad',
-    field: 'cad',
-    options: [
-      'CATIA V5', 'CATIA V6 / 3DEXPERIENCE', 'Siemens NX', 'SolidWorks',
-      'Solid Edge', 'Creo / PTC', 'Inventor', 'Fusion 360',
-      'COMPAX / TopSolid', 'CADDS', 'Geen'
-    ]
-  },
-  cam: {
-    containerId: 'ms-cam',
-    field: 'cam',
-    options: [
-      'Hypermill', 'Mastercam', 'NX CAM', 'WorkNC', 'PowerMill',
-      'Edgecam', 'GibbsCAM', 'SolidCAM', 'TopSolid CAM',
-      'Fusion 360 CAM', 'Esprit', 'Geen'
-    ]
-  },
-  metro: {
-    containerId: 'ms-metro',
-    field: 'metro',
-    options: [
-      'PC-DMIS', 'Calypso (Zeiss)', 'PolyWorks', 'PCDMIS', 'Rational DMIS',
-      'Metrolog', 'GOM Inspect', 'Verisurf', 'Renishaw MODUS',
-      'Handmatig / geen software'
-    ]
-  },
-  pdm: {
-    containerId: 'ms-pdm',
-    field: 'pdm',
-    options: [
-      'SAP', 'Teamcenter', 'Windchill', 'ENOVIA / 3DEXPERIENCE',
-      'SolidWorks PDM', 'Odoo', 'Exact', 'Microsoft Dynamics',
-      'SharePoint', 'Lokale opslag / geen PDM'
-    ]
-  }
+  industry: { containerId: 'ms-industry', field: 'industry', options: ['Aerospace','Automotive','Medical / Medtech','Energy / Oil & Gas','Defence','Semiconductors','Mould & Die','General Machining','Marine','Rail','Electronics','Toolmaking'] },
+  machinetypes: { containerId: 'ms-machinetypes', field: 'machinetypes', options: ['3-axis milling','4-axis milling','5-axis milling','2-axis turning','Turn-mill','Swiss-type turning','EDM wire','EDM sinker','Grinding','Gear cutting','Laser cutting','Waterjet','CMM'] },
+  cad: { containerId: 'ms-cad', field: 'cad', options: ['CATIA V5','CATIA V6 / 3DEXPERIENCE','Siemens NX','SolidWorks','Solid Edge','Creo / PTC','Inventor','Fusion 360','COMPAX / TopSolid','CADDS','Geen'] },
+  cam: { containerId: 'ms-cam', field: 'cam', options: ['Hypermill','Mastercam','NX CAM','WorkNC','PowerMill','Edgecam','GibbsCAM','SolidCAM','TopSolid CAM','Fusion 360 CAM','Esprit','Geen'] },
+  metro: { containerId: 'ms-metro', field: 'metro', options: ['PC-DMIS','Calypso (Zeiss)','PolyWorks','PCDMIS','Rational DMIS','Metrolog','GOM Inspect','Verisurf','Renishaw MODUS','Handmatig / geen software'] },
+  pdm: { containerId: 'ms-pdm', field: 'pdm', options: ['SAP','Teamcenter','Windchill','ENOVIA / 3DEXPERIENCE','SolidWorks PDM','Odoo','Exact','Microsoft Dynamics','SharePoint','Lokale opslag / geen PDM'] }
 };
 
 function buildMultiSelects() {
@@ -3526,7 +2717,6 @@ function getMultiSelectValue(field) {
   const val = (currentScan.company || {})[field];
   if (!val) return [];
   if (Array.isArray(val)) return val;
-  // legacy: comma string
   return val.split(',').map(s => s.trim()).filter(Boolean);
 }
 
@@ -3540,74 +2730,47 @@ function getMultiSelectDisplayValue(field) {
 function toggleMultiChip(chip, field, value) {
   if (!currentScan.company) currentScan.company = {};
   let current = getMultiSelectValue(field);
-  if (current.includes(value)) {
-    current = current.filter(v => v !== value);
-    chip.classList.remove('selected');
-  } else {
-    current = [...current, value];
-    chip.classList.add('selected');
-  }
+  if (current.includes(value)) { current = current.filter(v => v !== value); chip.classList.remove('selected'); }
+  else { current = [...current, value]; chip.classList.add('selected'); }
   currentScan.company[field] = current;
   scheduleSave();
 }
 
 function populateMultiSelects() {
-  // Rebuild chips with current selection state
   buildMultiSelects();
-  // Restore "other" inputs
   Object.entries(MULTISELECT_CONFIG).forEach(([key, cfg]) => {
     const otherInput = document.getElementById(`f-${cfg.field}-other`);
-    if (otherInput) {
-      otherInput.value = (currentScan.company || {})[cfg.field + '_other'] || '';
-    }
+    if (otherInput) otherInput.value = (currentScan.company || {})[cfg.field + '_other'] || '';
   });
 }
 
-// Listen for "other" input changes
 document.addEventListener('input', e => {
   const field = e.target.dataset.msother;
-  if (field) {
-    if (!currentScan.company) currentScan.company = {};
-    currentScan.company[field + '_other'] = e.target.value;
-    scheduleSave();
-  }
+  if (field) { if (!currentScan.company) currentScan.company = {}; currentScan.company[field + '_other'] = e.target.value; scheduleSave(); }
 });
 
-// Init multiselects on first load
 buildMultiSelects();
 
-/* ============================================================
-   EXPORT / IMPORT
-   ============================================================ */
 function exportScanJSON() {
-  if (!currentScan.id) {
-    showToast('Geen actieve scan om te exporteren.');
-    return;
-  }
-  // Build a clean snapshot with display label
+  if (!currentScan.id) { showToast('Geen actieve scan om te exporteren.'); return; }
   const snapshot = JSON.parse(JSON.stringify(currentScan));
   snapshot.displayName = (snapshot.company?.company || 'scan') + (snapshot.company?.date ? '_' + snapshot.company.date : '');
   snapshot.exportedAt = new Date().toISOString();
   snapshot.appVersion = APP_CONFIG.version;
-
   const json = JSON.stringify(snapshot, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const filename = (snapshot.displayName || 'dmrs-scan').replace(/[^a-zA-Z0-9_\-]/g, '_') + '.json';
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('Scan geëxporteerd als ' + filename);
 }
 
 function importScanJSON() {
   const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json,application/json';
+  input.type = 'file'; input.accept = '.json,application/json';
   input.onchange = e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -3616,29 +2779,34 @@ function importScanJSON() {
       try {
         const data = JSON.parse(evt.target.result);
         if (!data.id || !data.scores) throw new Error('Ongeldig bestandsformaat.');
-        // Give it a fresh id to avoid collision unless same id already exists
-        if (!savedScans.find(s => s.id === data.id)) {
-          data.id = 'scan_' + Date.now();
-        }
+        if (!savedScans.find(s => s.id === data.id)) data.id = 'scan_' + Date.now();
         currentScan = data;
         saveCurrentToStorage();
         populateCompanyForm();
         populateAuditTopics();
         showToast('Scan succesvol geïmporteerd.');
         navigateTo('company');
-      } catch(err) {
-        showToast('Fout bij importeren: ' + err.message);
-      }
+      } catch(err) { showToast('Fout bij importeren: ' + err.message); }
     };
     reader.readAsText(file);
   };
   input.click();
 }
 
-// ============================================================
-// init()
-init();
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCurrentScan(); } });
+window.addEventListener('resize', () => { if (currentView === 'dashboard') buildDashboard(); if (currentView === 'report') buildReport(); });
 
+function init() {
+  loadFromStorage();
+  updateHomeStats();
+  const dateInput = document.getElementById('f-date');
+  if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().substring(0,10);
+  if (currentScan.id) populateCompanyForm();
+  setSaveStatus('saved');
+  navigateTo('home');
+}
+
+init();
 </script>
 </body>
 </html>
