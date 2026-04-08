@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile Digitizer</title>
+<style>
+  /* ─── Design System ─────────────────────────────────────────────── */
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:        #0e0f11;
+    --surface:   #16181c;
+    --surface2:  #1e2026;
+    --border:    #2a2d35;
+    --accent:    #e8ff47;
+    --accent2:   #47b8ff;
+    --danger:    #ff5f5f;
+    --text:      #e8eaf0;
+    --text-muted:#7a7f8e;
+    --radius:    8px;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 48px 1fr;
+    overflow: hidden;
+  }
+
+  /* ─── Header ────────────────────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    gap: 16px;
+  }
+  header h1 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  header span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .header-reset {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .header-reset:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ─── Main Layout ───────────────────────────────────────────────── */
+  main {
+    display: grid;
+    grid-template-columns: 260px 1fr 300px;
+    overflow: hidden;
+  }
+
+  /* ─── Panels ────────────────────────────────────────────────────── */
+  .panel {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .panel:last-child { border-right: none; }
+
+  .panel-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Step Cards ─────────────────────────────────────────────────── */
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color .2s;
+  }
+  .step.active   { border-color: var(--accent); }
+  .step.done     { border-color: #2a3a1a; }
+  .step.disabled { opacity: .45; pointer-events: none; }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+  .step.active .step-num  { background: var(--accent); color: #000; border-color: var(--accent); }
+  .step.done   .step-num  { background: #3a5a20; color: var(--accent); border-color: #3a5a20; }
+
+  .step-title { font-size: 12px; font-weight: 600; }
+  .step-hint  { font-size: 11px; color: var(--text-muted); line-height: 1.4; font-family: var(--mono); }
+
+  /* ─── Form Controls ──────────────────────────────────────────────── */
+  label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px; }
+
+  input[type=text], input[type=number] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 5px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type=text]:focus, input[type=number]:focus { border-color: var(--accent); }
+
+  input[type=file] {
+    display: none;
+  }
+  .file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: all .15s;
+  }
+  .file-label:hover { border-color: var(--accent); color: var(--accent); }
+
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  /* ─── Buttons ────────────────────────────────────────────────────── */
+  .btn {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-accent {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-accent:hover { background: #d4eb30; }
+  .btn-accent:disabled { opacity: .4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+  /* ─── Color Swatch ───────────────────────────────────────────────── */
+  .color-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  #colorSwatch {
+    width: 28px; height: 28px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: #555;
+    flex-shrink: 0;
+  }
+  #colorValue {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ─── Slider Row ─────────────────────────────────────────────────── */
+  .slider-row {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .slider-label-row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .slider-val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  /* ─── Method Toggle ──────────────────────────────────────────────── */
+  .toggle-group {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .toggle-group button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 5px 4px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .toggle-group button.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* ─── Workspace ──────────────────────────────────────────────────── */
+  #workspace {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0b0d;
+    overflow: hidden;
+  }
+  #mainCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+  #empty-hint {
+    position: absolute;
+    text-align: center;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    pointer-events: none;
+  }
+  #empty-hint strong { color: var(--text); font-size: 14px; display: block; margin-bottom: 4px; }
+
+  /* workspace mode badge */
+  #modeBadge {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: rgba(0,0,0,.7);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    pointer-events: none;
+  }
+
+  /* ─── Right Panel ────────────────────────────────────────────────── */
+  #rightPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .right-section {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #chartCanvas {
+    width: 100%;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    display: block;
+  }
+
+  /* ─── Stats ──────────────────────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .stat-label { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; font-family: var(--mono); }
+  .stat-val { font-size: 14px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+  .stat-unit { font-size: 10px; color: var(--text-muted); }
+
+  /* ─── Export ─────────────────────────────────────────────────────── */
+  .export-row { display: flex; gap: 8px; }
+
+  /* ─── Messages ───────────────────────────────────────────────────── */
+  #message {
+    position: absolute;
+    bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s;
+    white-space: nowrap;
+  }
+  #message.show { opacity: 1; }
+  #message.error { border-color: var(--danger); color: var(--danger); }
+
+  /* ─── Preview Canvas ─────────────────────────────────────────────── */
+  #previewWrap {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  #previewLabel {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+  #previewCanvas {
+    max-width: 100%;
+    display: block;
+    border-radius: 4px;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════════════════ -->
+<header>
+  <h1>Profile Digitizer</h1>
+  <span>cycling stage elevation extractor</span>
+  <button class="header-reset btn btn-ghost btn-sm" onclick="resetAll()">↺ Reset All</button>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════════════════════ -->
+<main>
+
+  <!-- ── LEFT PANEL ─────────────────────────────────────────────── -->
+  <aside class="panel" id="leftPanel">
+    <div class="panel-title">Workflow</div>
+
+    <!-- Step 1: Upload -->
+    <div class="step active" id="step1">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">Upload Image</div>
+      </div>
+      <p class="step-hint">Upload a stage profile image (PNG, JPG, etc.)</p>
+      <label class="file-label" for="imageInput">
+        <span>📁</span> Choose image file
+      </label>
+      <input type="file" id="imageInput" accept="image/*">
+    </div>
+
+    <!-- Step 2: Calibration -->
+    <div class="step disabled" id="step2">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">Calibration</div>
+      </div>
+      <p class="step-hint">Set stage name and scale values.</p>
+      <label>Stage name (optional)</label>
+      <input type="text" id="stageName" placeholder="e.g. Stage 12">
+      <div class="row2">
+        <div>
+          <label>X max (km)</label>
+          <input type="number" id="xMax" placeholder="200" min="1">
+        </div>
+        <div>
+          <label>Y min (m)</label>
+          <input type="number" id="yMin" placeholder="0">
+        </div>
+      </div>
+      <div>
+        <label>Y max (m)</label>
+        <input type="number" id="yMax" placeholder="3000">
+      </div>
+    </div>
+
+    <!-- Step 3: Crop -->
+    <div class="step disabled" id="step3">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">Select Graph Area</div>
+      </div>
+      <p class="step-hint">Click and drag on the image to select the graph region. Only this area will be processed.</p>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-accent btn-sm" id="btnStartCrop" onclick="startCropMode()" style="flex:1">✂ Draw Crop</button>
+        <button class="btn btn-ghost btn-sm" id="btnResetCrop" onclick="resetCrop()">✕</button>
+      </div>
+      <div id="cropInfo" style="font-family:var(--mono);font-size:10px;color:var(--text-muted);"></div>
+    </div>
+
+    <!-- Step 4: Color Pick -->
+    <div class="step disabled" id="step4">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-title">Pick Line Color</div>
+      </div>
+      <p class="step-hint">Click on the profile line in the image to pick its color.</p>
+      <button class="btn btn-ghost btn-sm" id="btnPickColor" onclick="startColorPickMode()">🎨 Enable Color Pick</button>
+      <div class="color-row">
+        <div id="colorSwatch"></div>
+        <span id="colorValue">not selected</span>
+      </div>
+      <div id="previewWrap">
+        <div id="previewLabel">Crop preview — click to pick color</div>
+        <canvas id="previewCanvas"></canvas>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label-row">
+          <label>Color tolerance</label>
+          <span class="slider-val" id="tolVal">30</span>
+        </div>
+        <input type="range" id="toleranceSlider" min="5" max="120" value="30"
+               oninput="document.getElementById('tolVal').textContent=this.value">
+      </div>
+    </div>
+
+    <!-- Step 5: Extract -->
+    <div class="step disabled" id="step5">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div class="step-title">Extract Curve</div>
+      </div>
+      <p class="step-hint">Run the extraction pipeline on the selected crop.</p>
+
+      <div class="slider-row">
+        <div class="slider-label-row">
+          <label>Smoothing</label>
+          <span class="slider-val" id="smoothVal">5</span>
+        </div>
+        <input type="range" id="smoothSlider" min="1" max="30" value="5"
+               oninput="document.getElementById('smoothVal').textContent=this.value">
+      </div>
+
+      <div>
+        <label>Detection method</label>
+        <div class="toggle-group">
+          <button class="active" id="btnMedian" onclick="setMethod('median')">Median Y</button>
+          <button id="btnLowest" onclick="setMethod('lowest')">Lowest Y</button>
+          <button id="btnHighest" onclick="setMethod('highest')">Highest Y</button>
+        </div>
+      </div>
+
+      <div>
+        <label>Output points</label>
+        <input type="number" id="outputPoints" value="500" min="10" max="5000">
+      </div>
+
+      <button class="btn btn-accent" id="btnExtract" onclick="runExtraction()">⚡ Extract Profile</button>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+        <input type="checkbox" id="overlayToggle" checked onchange="toggleOverlay()">
+        <label for="overlayToggle" style="margin:0;cursor:pointer;">Show overlay</label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── CENTER WORKSPACE ────────────────────────────────────────── -->
+  <div id="workspace">
+    <div id="empty-hint">
+      <strong>Profile Digitizer</strong>
+      Upload a stage profile image to begin.<br>
+      Use the workflow on the left panel step by step.
+    </div>
+    <canvas id="mainCanvas"></canvas>
+    <div id="modeBadge" style="display:none;"></div>
+    <div id="message"></div>
+  </div>
+
+  <!-- ── RIGHT PANEL ─────────────────────────────────────────────── -->
+  <div id="rightPanel" class="panel">
+    <div class="panel-title" style="padding-bottom:8px;border-bottom:1px solid var(--border);">Results</div>
+
+    <div class="right-section">
+      <div class="panel-title" style="border:none;padding:0 0 8px;">Elevation Chart</div>
+      <canvas id="chartCanvas" height="160"></canvas>
+    </div>
+
+    <div class="right-section">
+      <div class="panel-title" style="border:none;padding:0 0 8px;">Stats</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Distance</div>
+          <div class="stat-val" id="statDist">—</div>
+          <div class="stat-unit">km</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Points</div>
+          <div class="stat-val" id="statPts">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Min Elevation</div>
+          <div class="stat-val" id="statMin">—</div>
+          <div class="stat-unit">m</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Max Elevation</div>
+          <div class="stat-val" id="statMax">—</div>
+          <div class="stat-unit">m</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Ascent</div>
+          <div class="stat-val" id="statAscent">—</div>
+          <div class="stat-unit">m</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Descent</div>
+          <div class="stat-val" id="statDescent">—</div>
+          <div class="stat-unit">m</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-section" style="margin-top:auto;">
+      <div class="panel-title" style="border:none;padding:0 0 8px;">Export</div>
+      <div class="export-row">
+        <button class="btn btn-accent btn-sm" style="flex:1" onclick="exportJSON()">↓ JSON</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="exportCSV()">↓ CSV</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ──────────────────────────────────────────────────────────────────
+   STATE
+────────────────────────────────────────────────────────────────── */
+const state = {
+  image: null,          // HTMLImageElement
+  imgW: 0, imgH: 0,    // original image dimensions
+
+  // display transform
+  displayOffX: 0, displayOffY: 0,
+  displayScale: 1,
+
+  // crop in DISPLAY coordinates
+  cropStart: null, cropEnd: null, cropRect: null,  // {x,y,w,h} in display coords
+  isCropping: false,
+
+  // crop in IMAGE coordinates
+  imgCropRect: null,   // {x,y,w,h}
+
+  // color pick
+  isColorPicking: false,
+  lineColor: null,     // {r,g,b}
+
+  // mode
+  mode: 'idle', // 'idle' | 'crop' | 'colorpick'
+
+  // extracted data
+  rawPixelCurve: [],   // array of {x (crop px), y (crop px)} – one per column
+  resultPoints: [],    // [{distance_km, elevation_m}]
+
+  // overlay visibility
+  showOverlay: true,
+
+  // method
+  method: 'median',
+};
+
+/* ──────────────────────────────────────────────────────────────────
+   DOM REFERENCES
+────────────────────────────────────────────────────────────────── */
+const mainCanvas   = document.getElementById('mainCanvas');
+const ctx          = mainCanvas.getContext('2d');
+const chartCanvas  = document.getElementById('chartCanvas');
+const chartCtx     = chartCanvas.getContext('2d');
+const previewCanvas= document.getElementById('previewCanvas');
+const previewCtx   = previewCanvas.getContext('2d');
+
+/* ──────────────────────────────────────────────────────────────────
+   UTILITY: show message
+────────────────────────────────────────────────────────────────── */
+let msgTimer = null;
+function showMsg(text, isError=false, duration=2500) {
+  const el = document.getElementById('message');
+  el.textContent = text;
+  el.className   = 'show' + (isError ? ' error' : '');
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(() => { el.className = ''; }, duration);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   UTILITY: set badge
+────────────────────────────────────────────────────────────────── */
+function setBadge(text) {
+  const b = document.getElementById('modeBadge');
+  if (text) { b.style.display='block'; b.textContent=text; }
+  else b.style.display='none';
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   UTILITY: step state management
+────────────────────────────────────────────────────────────────── */
+function activateStep(n) {
+  for (let i=1; i<=5; i++) {
+    const el = document.getElementById('step'+i);
+    el.classList.remove('active','done','disabled');
+    if      (i < n)  el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+    else             el.classList.add('disabled');
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   STEP 1: Load Image
+────────────────────────────────────────────────────────────────── */
+document.getElementById('imageInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => loadImage(img);
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function loadImage(img) {
+  state.image = img;
+  state.imgW  = img.naturalWidth;
+  state.imgH  = img.naturalHeight;
+
+  // hide empty hint
+  document.getElementById('empty-hint').style.display = 'none';
+
+  // size canvas to workspace
+  const ws  = document.getElementById('workspace');
+  const wsW = ws.clientWidth;
+  const wsH = ws.clientHeight;
+  mainCanvas.width  = wsW;
+  mainCanvas.height = wsH;
+
+  // compute display transform (fit with letterbox)
+  computeDisplayTransform();
+  drawMainCanvas();
+
+  activateStep(2);
+  showMsg('Image loaded. Fill in calibration values.');
+}
+
+function computeDisplayTransform() {
+  const ws  = document.getElementById('workspace');
+  const wsW = ws.clientWidth;
+  const wsH = ws.clientHeight;
+  const scaleX = wsW / state.imgW;
+  const scaleY = wsH / state.imgH;
+  state.displayScale = Math.min(scaleX, scaleY, 1); // don't upscale
+  const dispW = state.imgW * state.displayScale;
+  const dispH = state.imgH * state.displayScale;
+  state.displayOffX = (wsW - dispW) / 2;
+  state.displayOffY = (wsH - dispH) / 2;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   DRAW MAIN CANVAS
+────────────────────────────────────────────────────────────────── */
+function drawMainCanvas() {
+  if (!state.image) return;
+  const { imgW, imgH, displayScale, displayOffX, displayOffY } = state;
+  const dispW = imgW * displayScale;
+  const dispH = imgH * displayScale;
+
+  ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+  // draw image
+  ctx.drawImage(state.image, displayOffX, displayOffY, dispW, dispH);
+
+  // draw dimmer outside crop
+  if (state.imgCropRect) {
+    const cr = imgCropToDisplay(state.imgCropRect);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    // top
+    ctx.fillRect(displayOffX, displayOffY, dispW, cr.y - displayOffY);
+    // bottom
+    ctx.fillRect(displayOffX, cr.y + cr.h, dispW, (displayOffY + dispH) - (cr.y + cr.h));
+    // left
+    ctx.fillRect(displayOffX, cr.y, cr.x - displayOffX, cr.h);
+    // right
+    ctx.fillRect(cr.x + cr.w, cr.y, (displayOffX + dispW) - (cr.x + cr.w), cr.h);
+
+    // crop border
+    ctx.strokeStyle = '#e8ff47';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([]);
+    ctx.strokeRect(cr.x, cr.y, cr.w, cr.h);
+  }
+
+  // draw active crop selection
+  if (state.isCropping && state.cropStart && state.cropEnd) {
+    const rx = Math.min(state.cropStart.x, state.cropEnd.x);
+    const ry = Math.min(state.cropStart.y, state.cropEnd.y);
+    const rw = Math.abs(state.cropEnd.x - state.cropStart.x);
+    const rh = Math.abs(state.cropEnd.y - state.cropStart.y);
+    ctx.strokeStyle = '#e8ff47';
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([6,3]);
+    ctx.strokeRect(rx, ry, rw, rh);
+    ctx.fillStyle = 'rgba(232,255,71,0.08)';
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.setLineDash([]);
+  }
+
+  // draw overlay
+  if (state.showOverlay && state.rawPixelCurve.length > 0 && state.imgCropRect) {
+    drawOverlay();
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   COORDINATE HELPERS
+────────────────────────────────────────────────────────────────── */
+// Convert display (canvas) coords to image coords
+function displayToImg(x, y) {
+  return {
+    x: (x - state.displayOffX) / state.displayScale,
+    y: (y - state.displayOffY) / state.displayScale
+  };
+}
+
+// Convert image coords to display coords
+function imgToDisplay(x, y) {
+  return {
+    x: x * state.displayScale + state.displayOffX,
+    y: y * state.displayScale + state.displayOffY
+  };
+}
+
+// Convert imgCropRect to display rect
+function imgCropToDisplay(r) {
+  const tl = imgToDisplay(r.x, r.y);
+  return {
+    x: tl.x, y: tl.y,
+    w: r.w * state.displayScale,
+    h: r.h * state.displayScale
+  };
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   STEP 3: CROP SELECTION
+────────────────────────────────────────────────────────────────── */
+function startCropMode() {
+  if (!state.image) { showMsg('Upload an image first.', true); return; }
+  state.mode = 'crop';
+  state.isCropping = false;
+  state.cropStart = null;
+  state.cropEnd   = null;
+  setBadge('✂ CROP MODE — click and drag to select graph area');
+  showMsg('Click and drag on the image to define the graph area.');
+}
+
+function resetCrop() {
+  state.imgCropRect = null;
+  state.cropStart   = null;
+  state.cropEnd     = null;
+  state.isCropping  = false;
+  state.mode        = 'idle';
+  state.rawPixelCurve = [];
+  state.resultPoints  = [];
+  document.getElementById('cropInfo').textContent = '';
+  document.getElementById('step4').classList.add('disabled');
+  document.getElementById('step5').classList.add('disabled');
+  setBadge('');
+  drawMainCanvas();
+  showMsg('Crop reset.');
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   STEP 4: COLOR PICKING
+────────────────────────────────────────────────────────────────── */
+function startColorPickMode() {
+  if (!state.imgCropRect) { showMsg('Select graph area first.', true); return; }
+  state.mode = 'colorpick';
+  setBadge('🎨 COLOR PICK — click on the profile line');
+  showMsg('Click directly on the colored profile line.');
+  renderPreviewCanvas();
+}
+
+function renderPreviewCanvas() {
+  if (!state.imgCropRect || !state.image) return;
+  const cr = state.imgCropRect;
+  previewCanvas.width  = cr.w;
+  previewCanvas.height = cr.h;
+  previewCtx.drawImage(state.image, cr.x, cr.y, cr.w, cr.h, 0, 0, cr.w, cr.h);
+  document.getElementById('previewWrap').style.display = 'flex';
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   STEP 5: EXTRACT
+────────────────────────────────────────────────────────────────── */
+function setMethod(m) {
+  state.method = m;
+  document.getElementById('btnMedian').classList.toggle('active', m==='median');
+  document.getElementById('btnLowest').classList.toggle('active', m==='lowest');
+  document.getElementById('btnHighest').classList.toggle('active', m==='highest');
+}
+
+function toggleOverlay() {
+  state.showOverlay = document.getElementById('overlayToggle').checked;
+  drawMainCanvas();
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   CANVAS EVENT HANDLERS
+────────────────────────────────────────────────────────────────── */
+mainCanvas.addEventListener('mousedown', onCanvasMouseDown);
+mainCanvas.addEventListener('mousemove', onCanvasMouseMove);
+mainCanvas.addEventListener('mouseup',   onCanvasMouseUp);
+mainCanvas.addEventListener('click',     onCanvasClick);
+
+function onCanvasMouseDown(e) {
+  if (!state.image) return;
+  if (state.mode === 'crop') {
+    const pos = canvasPos(e);
+    state.cropStart = pos;
+    state.cropEnd   = pos;
+    state.isCropping = true;
+  }
+}
+
+function onCanvasMouseMove(e) {
+  if (!state.image) return;
+  if (state.mode === 'crop' && state.isCropping) {
+    state.cropEnd = canvasPos(e);
+    drawMainCanvas();
+  }
+}
+
+function onCanvasMouseUp(e) {
+  if (!state.image) return;
+  if (state.mode === 'crop' && state.isCropping) {
+    state.cropEnd    = canvasPos(e);
+    state.isCropping = false;
+
+    const rx = Math.min(state.cropStart.x, state.cropEnd.x);
+    const ry = Math.min(state.cropStart.y, state.cropEnd.y);
+    const rw = Math.abs(state.cropEnd.x - state.cropStart.x);
+    const rh = Math.abs(state.cropEnd.y - state.cropStart.y);
+
+    if (rw < 5 || rh < 5) {
+      showMsg('Selection too small. Try again.', true);
+      return;
+    }
+
+    // convert to image coordinates
+    const tl = displayToImg(rx, ry);
+    const br = displayToImg(rx + rw, ry + rh);
+    const imgW = state.imgW, imgH = state.imgH;
+
+    state.imgCropRect = {
+      x: Math.max(0, Math.round(tl.x)),
+      y: Math.max(0, Math.round(tl.y)),
+      w: Math.min(imgW - Math.round(tl.x), Math.round(br.x - tl.x)),
+      h: Math.min(imgH - Math.round(tl.y), Math.round(br.y - tl.y))
+    };
+
+    state.mode = 'idle';
+    setBadge('');
+    document.getElementById('cropInfo').textContent =
+      `Region: ${state.imgCropRect.w} × ${state.imgCropRect.h} px`;
+
+    // enable step 4
+    document.getElementById('step4').classList.remove('disabled');
+    activateStep(4);
+
+    drawMainCanvas();
+    showMsg('Crop set! Now pick the profile line color.');
+    renderPreviewCanvas();
+  }
+}
+
+function onCanvasClick(e) {
+  if (!state.image) return;
+  if (state.mode === 'colorpick') {
+    pickColorAtDisplay(canvasPos(e));
+  }
+}
+
+// Handle color pick on preview canvas too
+previewCanvas.addEventListener('click', (e) => {
+  if (state.mode !== 'colorpick') return;
+  const rect = previewCanvas.getBoundingClientRect();
+  const px = Math.floor((e.clientX - rect.left) * (previewCanvas.width  / previewCanvas.clientWidth));
+  const py = Math.floor((e.clientY - rect.top)  * (previewCanvas.height / previewCanvas.clientHeight));
+  const pd = previewCtx.getImageData(px, py, 1, 1).data;
+  setPickedColor(pd[0], pd[1], pd[2]);
+});
+
+function canvasPos(e) {
+  const rect = mainCanvas.getBoundingClientRect();
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  };
+}
+
+function pickColorAtDisplay(pos) {
+  const pixel = ctx.getImageData(pos.x, pos.y, 1, 1).data;
+  setPickedColor(pixel[0], pixel[1], pixel[2]);
+}
+
+function setPickedColor(r, g, b) {
+  state.lineColor = { r, g, b };
+  const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+  document.getElementById('colorSwatch').style.background = hex;
+  document.getElementById('colorValue').textContent = `rgb(${r}, ${g}, ${b})`;
+  state.mode = 'idle';
+  setBadge('');
+
+  // enable step 5
+  document.getElementById('step5').classList.remove('disabled');
+  activateStep(5);
+  showMsg(`Color picked: ${hex}. Adjust tolerance and extract.`);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   EXTRACTION PIPELINE
+────────────────────────────────────────────────────────────────── */
+function runExtraction() {
+  // validation
+  const xMax = parseFloat(document.getElementById('xMax').value);
+  const yMin = parseFloat(document.getElementById('yMin').value);
+  const yMax = parseFloat(document.getElementById('yMax').value);
+
+  if (!state.imgCropRect)  { showMsg('Select graph area first.', true); return; }
+  if (!state.lineColor)    { showMsg('Pick line color first.', true); return; }
+  if (isNaN(xMax) || xMax <= 0) { showMsg('Enter a valid X max.', true); return; }
+  if (isNaN(yMin) || isNaN(yMax)) { showMsg('Enter valid Y min and Y max.', true); return; }
+  if (yMax <= yMin)         { showMsg('Y max must be greater than Y min.', true); return; }
+
+  const tolerance  = parseInt(document.getElementById('toleranceSlider').value);
+  const smoothing  = parseInt(document.getElementById('smoothSlider').value);
+  const outputPts  = parseInt(document.getElementById('outputPoints').value) || 500;
+
+  // --- get crop pixel data from original image ---
+  const cr = state.imgCropRect;
+  const offscreen = document.createElement('canvas');
+  offscreen.width  = cr.w;
+  offscreen.height = cr.h;
+  const offCtx = offscreen.getContext('2d');
+  offCtx.drawImage(state.image, cr.x, cr.y, cr.w, cr.h, 0, 0, cr.w, cr.h);
+  const imgData = offCtx.getImageData(0, 0, cr.w, cr.h);
+  const pixels  = imgData.data;
+
+  const { r: lr, g: lg, b: lb } = state.lineColor;
+
+  // --- build per-column profile ---
+  // For each x column, collect all matching y positions
+  const rawCurve = new Array(cr.w).fill(null);
+
+  for (let x = 0; x < cr.w; x++) {
+    const matchingY = [];
+    for (let y = 0; y < cr.h; y++) {
+      const idx = (y * cr.w + x) * 4;
+      const pr = pixels[idx], pg = pixels[idx+1], pb = pixels[idx+2];
+      const dist = colorDist(pr, pg, pb, lr, lg, lb);
+      if (dist <= tolerance) matchingY.push(y);
+    }
+    if (matchingY.length > 0) {
+      if      (state.method === 'median')  rawCurve[x] = median(matchingY);
+      else if (state.method === 'lowest')  rawCurve[x] = Math.max(...matchingY);
+      else                                 rawCurve[x] = Math.min(...matchingY);
+    }
+  }
+
+  // --- interpolate missing columns ---
+  const interpolated = interpolateMissingColumns(rawCurve, cr.w);
+
+  // --- smooth ---
+  const smoothed = smoothCurve(interpolated, smoothing);
+
+  state.rawPixelCurve = smoothed.map((y, x) => ({ x, y }));
+
+  // --- convert to real coordinates ---
+  state.resultPoints = convertToRealCoordinates(smoothed, cr.w, cr.h, xMax, yMin, yMax);
+
+  // --- resample ---
+  if (outputPts > 0 && outputPts < state.resultPoints.length) {
+    state.resultPoints = resample(state.resultPoints, outputPts);
+  }
+
+  // --- draw results ---
+  drawMainCanvas();
+  drawChart(state.resultPoints);
+  updateStats(state.resultPoints, xMax);
+
+  activateStep(5);
+  showMsg(`Extracted ${state.resultPoints.length} points.`);
+}
+
+// Euclidean RGB distance
+function colorDist(r1, g1, b1, r2, g2, b2) {
+  return Math.sqrt((r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2);
+}
+
+function median(arr) {
+  const sorted = [...arr].sort((a,b)=>a-b);
+  const mid = Math.floor(sorted.length/2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid-1]+sorted[mid])/2;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   INTERPOLATE MISSING COLUMNS
+────────────────────────────────────────────────────────────────── */
+function interpolateMissingColumns(curve, width) {
+  const out = [...curve];
+
+  // find first and last valid
+  let first = -1, last = -1;
+  for (let i=0; i<width; i++) { if (out[i]!==null && first===-1) first=i; }
+  for (let i=width-1; i>=0; i--) { if (out[i]!==null && last===-1) last=i; }
+
+  if (first === -1) return new Array(width).fill(0); // no data at all
+
+  // fill before first
+  for (let i=0; i<first; i++) out[i] = out[first];
+  // fill after last
+  for (let i=last+1; i<width; i++) out[i] = out[last];
+
+  // fill gaps between valid segments
+  for (let i=first; i<=last; i++) {
+    if (out[i] === null) {
+      let l = i-1, r = i+1;
+      while (r<=last && out[r]===null) r++;
+      const lv = out[l], rv = out[r];
+      const span = r - l;
+      for (let j=l+1; j<r; j++) {
+        out[j] = lv + (rv-lv) * ((j-l)/span);
+      }
+      i = r-1;
+    }
+  }
+
+  return out;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   SMOOTH CURVE (moving average)
+────────────────────────────────────────────────────────────────── */
+function smoothCurve(curve, window) {
+  if (window <= 1) return [...curve];
+  const out = new Array(curve.length);
+  const half = Math.floor(window/2);
+  for (let i=0; i<curve.length; i++) {
+    let sum=0, cnt=0;
+    for (let j=Math.max(0,i-half); j<=Math.min(curve.length-1,i+half); j++) {
+      sum += curve[j]; cnt++;
+    }
+    out[i] = sum/cnt;
+  }
+  return out;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   COORDINATE CONVERSION
+────────────────────────────────────────────────────────────────── */
+function convertToRealCoordinates(pixelCurve, cropW, cropH, xMax, yMin, yMax) {
+  return pixelCurve.map((y, x) => ({
+    distance_km: (x / (cropW - 1)) * xMax,
+    elevation_m: Math.round(yMax - (y / (cropH - 1)) * (yMax - yMin))
+  }));
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   RESAMPLE
+────────────────────────────────────────────────────────────────── */
+function resample(points, n) {
+  const out = [];
+  for (let i=0; i<n; i++) {
+    const t   = i / (n-1);
+    const idx = t * (points.length-1);
+    const lo  = Math.floor(idx), hi = Math.min(lo+1, points.length-1);
+    const frac= idx - lo;
+    out.push({
+      distance_km: points[lo].distance_km + (points[hi].distance_km - points[lo].distance_km) * frac,
+      elevation_m: Math.round(points[lo].elevation_m + (points[hi].elevation_m - points[lo].elevation_m) * frac)
+    });
+  }
+  return out;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   DRAW OVERLAY on main canvas
+────────────────────────────────────────────────────────────────── */
+function drawOverlay() {
+  if (!state.rawPixelCurve.length || !state.imgCropRect) return;
+  const cr   = state.imgCropRect;
+  const { displayScale, displayOffX, displayOffY } = state;
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#47b8ff';
+  ctx.lineWidth   = 2;
+  ctx.setLineDash([]);
+
+  let first = true;
+  for (const pt of state.rawPixelCurve) {
+    const dx = (cr.x + pt.x) * displayScale + displayOffX;
+    const dy = (cr.y + pt.y) * displayScale + displayOffY;
+    if (first) { ctx.moveTo(dx, dy); first=false; }
+    else        ctx.lineTo(dx, dy);
+  }
+  ctx.stroke();
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   DRAW CHART
+────────────────────────────────────────────────────────────────── */
+function drawChart(points) {
+  if (!points || points.length === 0) return;
+
+  const W = chartCanvas.width  = chartCanvas.parentElement.clientWidth - 28;
+  const H = chartCanvas.height = 160;
+  chartCtx.clearRect(0, 0, W, H);
+
+  const PAD = { top: 12, right: 12, bottom: 28, left: 44 };
+  const cW  = W - PAD.left - PAD.right;
+  const cH  = H - PAD.top  - PAD.bottom;
+
+  const minKm  = points[0].distance_km;
+  const maxKm  = points[points.length-1].distance_km;
+  const elevs  = points.map(p => p.elevation_m);
+  const minEl  = Math.min(...elevs);
+  const maxEl  = Math.max(...elevs);
+  const rangeEl= maxEl - minEl || 1;
+  const rangeKm= maxKm - minKm || 1;
+
+  // background
+  chartCtx.fillStyle = '#1a1c22';
+  chartCtx.fillRect(0, 0, W, H);
+
+  // grid
+  chartCtx.strokeStyle = '#2a2d35';
+  chartCtx.lineWidth   = 1;
+  chartCtx.setLineDash([4,4]);
+  for (let i=0; i<=4; i++) {
+    const y = PAD.top + (cH * i / 4);
+    chartCtx.beginPath();
+    chartCtx.moveTo(PAD.left, y);
+    chartCtx.lineTo(PAD.left + cW, y);
+    chartCtx.stroke();
+  }
+  chartCtx.setLineDash([]);
+
+  // fill under curve
+  const toX = km  => PAD.left + ((km  - minKm)  / rangeKm) * cW;
+  const toY = elv => PAD.top  + (1 - (elv - minEl) / rangeEl) * cH;
+
+  chartCtx.beginPath();
+  chartCtx.moveTo(toX(points[0].distance_km), toY(points[0].elevation_m));
+  for (const p of points) chartCtx.lineTo(toX(p.distance_km), toY(p.elevation_m));
+  chartCtx.lineTo(toX(points[points.length-1].distance_km), PAD.top + cH);
+  chartCtx.lineTo(toX(points[0].distance_km), PAD.top + cH);
+  chartCtx.closePath();
+  const grad = chartCtx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
+  grad.addColorStop(0,   'rgba(71,184,255,0.4)');
+  grad.addColorStop(1,   'rgba(71,184,255,0.02)');
+  chartCtx.fillStyle = grad;
+  chartCtx.fill();
+
+  // curve line
+  chartCtx.beginPath();
+  chartCtx.strokeStyle = '#47b8ff';
+  chartCtx.lineWidth   = 1.5;
+  chartCtx.moveTo(toX(points[0].distance_km), toY(points[0].elevation_m));
+  for (const p of points) chartCtx.lineTo(toX(p.distance_km), toY(p.elevation_m));
+  chartCtx.stroke();
+
+  // axes labels
+  chartCtx.fillStyle  = '#7a7f8e';
+  chartCtx.font       = '10px JetBrains Mono, monospace';
+  chartCtx.textAlign  = 'right';
+
+  // y-axis
+  for (let i=0; i<=4; i++) {
+    const v  = minEl + rangeEl * (1 - i/4);
+    const yd = PAD.top + (cH * i / 4);
+    chartCtx.fillText(Math.round(v) + 'm', PAD.left - 4, yd + 3);
+  }
+
+  // x-axis
+  chartCtx.textAlign = 'center';
+  const nTicks = 5;
+  for (let i=0; i<=nTicks; i++) {
+    const v  = minKm + rangeKm * (i/nTicks);
+    const xd = toX(v);
+    chartCtx.fillText(Math.round(v) + 'km', xd, PAD.top + cH + 16);
+  }
+
+  // axes
+  chartCtx.strokeStyle = '#3a3d45';
+  chartCtx.lineWidth   = 1;
+  chartCtx.beginPath();
+  chartCtx.moveTo(PAD.left, PAD.top);
+  chartCtx.lineTo(PAD.left, PAD.top + cH);
+  chartCtx.lineTo(PAD.left + cW, PAD.top + cH);
+  chartCtx.stroke();
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   STATS
+────────────────────────────────────────────────────────────────── */
+function computeStats(points) {
+  if (!points || points.length === 0) return null;
+  const elevs = points.map(p => p.elevation_m);
+  let ascent = 0, descent = 0;
+  for (let i=1; i<elevs.length; i++) {
+    const d = elevs[i] - elevs[i-1];
+    if (d > 0) ascent  += d;
+    else        descent += Math.abs(d);
+  }
+  return {
+    count:   points.length,
+    minEl:   Math.min(...elevs),
+    maxEl:   Math.max(...elevs),
+    ascent:  Math.round(ascent),
+    descent: Math.round(descent),
+    dist:    points[points.length-1].distance_km.toFixed(1)
+  };
+}
+
+function updateStats(points, xMax) {
+  const s = computeStats(points);
+  if (!s) return;
+  document.getElementById('statDist').textContent    = s.dist;
+  document.getElementById('statPts').textContent     = s.count;
+  document.getElementById('statMin').textContent     = s.minEl;
+  document.getElementById('statMax').textContent     = s.maxEl;
+  document.getElementById('statAscent').textContent  = s.ascent;
+  document.getElementById('statDescent').textContent = s.descent;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   EXPORT
+────────────────────────────────────────────────────────────────── */
+function exportJSON() {
+  if (!state.resultPoints.length) { showMsg('No data to export.', true); return; }
+  const payload = {
+    stage_name: document.getElementById('stageName').value || 'Unnamed stage',
+    x_max_km:   parseFloat(document.getElementById('xMax').value),
+    y_min_m:    parseFloat(document.getElementById('yMin').value),
+    y_max_m:    parseFloat(document.getElementById('yMax').value),
+    points:     state.resultPoints.map(p => ({
+      distance_km: +p.distance_km.toFixed(3),
+      elevation_m: p.elevation_m
+    }))
+  };
+  download('profile.json', JSON.stringify(payload, null, 2), 'application/json');
+  showMsg('JSON exported.');
+}
+
+function exportCSV() {
+  if (!state.resultPoints.length) { showMsg('No data to export.', true); return; }
+  let csv = 'distance_km,elevation_m\n';
+  for (const p of state.resultPoints) {
+    csv += `${p.distance_km.toFixed(3)},${p.elevation_m}\n`;
+  }
+  download('profile.csv', csv, 'text/csv');
+  showMsg('CSV exported.');
+}
+
+function download(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   RESET ALL
+────────────────────────────────────────────────────────────────── */
+function resetAll() {
+  state.image           = null;
+  state.imgW = state.imgH = 0;
+  state.imgCropRect     = null;
+  state.cropStart       = null;
+  state.cropEnd         = null;
+  state.isCropping      = false;
+  state.lineColor       = null;
+  state.rawPixelCurve   = [];
+  state.resultPoints    = [];
+  state.mode            = 'idle';
+  state.showOverlay     = true;
+
+  ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+  chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+  document.getElementById('empty-hint').style.display = 'block';
+
+  document.getElementById('colorSwatch').style.background = '#555';
+  document.getElementById('colorValue').textContent       = 'not selected';
+  document.getElementById('cropInfo').textContent         = '';
+  document.getElementById('previewWrap').style.display    = 'none';
+  document.getElementById('overlayToggle').checked        = true;
+  document.getElementById('imageInput').value             = '';
+
+  ['statDist','statPts','statMin','statMax','statAscent','statDescent']
+    .forEach(id => document.getElementById(id).textContent = '—');
+
+  setBadge('');
+  activateStep(1);
+  showMsg('Reset complete.');
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   WINDOW RESIZE
+────────────────────────────────────────────────────────────────── */
+window.addEventListener('resize', () => {
+  if (!state.image) return;
+  const ws = document.getElementById('workspace');
+  mainCanvas.width  = ws.clientWidth;
+  mainCanvas.height = ws.clientHeight;
+  computeDisplayTransform();
+  drawMainCanvas();
+  if (state.resultPoints.length) drawChart(state.resultPoints);
+});
+
+/* ──────────────────────────────────────────────────────────────────
+   INIT
+────────────────────────────────────────────────────────────────── */
+activateStep(1);
+</script>
+</body>
+</html>
