@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Godfather Quest</title>
+<style>
+  :root{
+    --bg:#111827;
+    --panel:#f2dfb0;
+    --panel2:#e8c98e;
+    --ink:#2b2016;
+    --red:#8e2f24;
+    --red2:#b4452f;
+    --gold:#e6b74e;
+    --green:#3f7d3a;
+    --blue:#315f8e;
+    --wood:#6f431f;
+    --wood2:#4d2e16;
+    --cream:#fff0c7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1020;color:white;font-family:Trebuchet MS, Verdana, sans-serif}
+  button{font:inherit}
+  #game{width:100vw;height:100vh;position:relative;overflow:hidden;background:linear-gradient(#76bff2 0 48%,#90c763 48% 100%)}
+  .screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px}
+  .screen.active{display:flex}
+  .bg-fantasy:before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(circle at 18% 15%,rgba(255,255,255,.8) 0 2%,transparent 2.2%),
+      radial-gradient(circle at 22% 15%,rgba(255,255,255,.8) 0 3%,transparent 3.2%),
+      radial-gradient(circle at 77% 18%,rgba(255,255,255,.7) 0 3%,transparent 3.3%),
+      linear-gradient(12deg,transparent 0 63%,rgba(38,96,51,.45) 64% 100%);
+    opacity:.7
+  }
+  .castle{
+    position:absolute;right:8%;bottom:30%;width:170px;height:150px;opacity:.8
+  }
+  .tower,.keep{position:absolute;background:#9a7a6a;border:5px solid #5c443a;border-bottom:none}
+  .tower{width:42px;height:95px;bottom:0}.tower:before{content:"";position:absolute;left:-8px;top:-20px;border-left:29px solid transparent;border-right:29px solid transparent;border-bottom:0;border-top:28px solid #5d4569}
+  .t1{left:0}.t2{right:0}
+  .keep{left:45px;bottom:0;width:80px;height:120px}
+  .keep:before{content:"";position:absolute;left:-8px;top:-28px;border-left:48px solid transparent;border-right:48px solid transparent;border-top:0;border-bottom:32px solid #5d4569}
+  .window{width:10px;height:18px;background:#2c3150;border-radius:5px 5px 0 0;position:absolute}
+  .title-sign{
+    position:relative;background:linear-gradient(#815328,#5a3419);border:6px solid #3d2513;border-radius:14px;
+    padding:18px 34px;box-shadow:0 8px 0 #2a190e,0 16px 28px rgba(0,0,0,.25);text-align:center;min-width:min(760px,92vw)
+  }
+  .title-sign h1{margin:0;color:#f6cf65;text-shadow:3px 3px 0 #6b2b18;font-size:clamp(34px,7vw,78px);letter-spacing:2px}
+  .title-sign .subtitle{display:inline-block;margin-top:8px;background:var(--red);border:4px solid #5b1e18;border-radius:8px;padding:7px 24px;font-weight:900;font-size:clamp(18px,3vw,30px)}
+  .menu{position:relative;margin-top:26px;background:rgba(64,36,16,.93);border:5px solid #3b2110;border-radius:10px;padding:12px;display:grid;gap:10px}
+  .menu button,.rpg-btn{
+    background:linear-gradient(#9a642d,#6e401d);color:#fff0bf;border:3px solid #3e2412;border-radius:7px;padding:14px 20px;
+    font-weight:900;text-transform:uppercase;letter-spacing:.5px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08);cursor:pointer
+  }
+  .menu button:hover,.rpg-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+  .hero-wrap{width:min(1000px,95vw)}
+  .banner{display:inline-block;background:var(--red);border:5px solid #5b1f18;border-radius:12px;padding:10px 34px;font-size:clamp(26px,4vw,46px);font-weight:900;box-shadow:0 6px 0 #34130f;margin-bottom:24px}
+  .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+  .card{background:var(--panel);color:var(--ink);border:6px solid var(--wood2);border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.3);position:relative}
+  .name-ribbon{margin:-36px auto 12px;width:72%;text-align:center;color:white;padding:8px;border-radius:9px;font-size:30px;font-weight:900;border:4px solid rgba(0,0,0,.25)}
+  .robin .name-ribbon{background:var(--blue)} .dieter .name-ribbon{background:var(--green)}
+  .portrait{height:230px;display:flex;align-items:flex-end;justify-content:center;position:relative;overflow:hidden}
+  .person{position:relative;width:150px;height:190px}
+  .head{position:absolute;left:43px;top:22px;width:68px;height:78px;background:#efb47c;border-radius:42% 42% 47% 47%;border:4px solid #50311d;z-index:3}
+  .hair{position:absolute;left:36px;top:4px;width:84px;height:46px;background:#5a321a;border-radius:55% 45% 35% 25%;transform:rotate(-8deg);z-index:4;border:4px solid #3a2113}
+  .hair:after{content:"";position:absolute;width:28px;height:30px;background:#5a321a;right:-10px;top:15px;transform:rotate(30deg);border-radius:50%}
+  .eye{position:absolute;top:35px;width:7px;height:9px;background:#22180f;border-radius:50%;z-index:5}.e1{left:17px}.e2{right:17px}
+  .mouth{position:absolute;left:21px;bottom:16px;width:28px;height:12px;border-bottom:4px solid #7e321f;border-radius:50%;z-index:5}
+  .body{position:absolute;left:22px;top:91px;width:108px;height:100px;border-radius:35px 35px 12px 12px;border:4px solid #2a2a2a}
+  .robin .body{background:#3f6e98}.dieter .body{background:#4d6e3f}
+  .cape{position:absolute;left:6px;top:97px;width:55px;height:88px;background:#273a61;transform:skew(-10deg);border-radius:20px}
+  .dieter .cape{background:#2f4c2c}
+  .stats{font-size:15px;line-height:1.7}.stars{color:#c48919;letter-spacing:2px}
+  .choose{width:100%;margin-top:12px}
+  .dialog{
+    width:min(900px,94vw);background:var(--panel);color:var(--ink);border:6px solid var(--wood2);border-radius:12px;padding:28px;box-shadow:0 12px 36px rgba(0,0,0,.35);position:relative
+  }
+  .dialog h2{margin-top:0;font-size:clamp(28px,5vw,52px);color:#6f241b}
+  .wizard{float:right;width:180px;height:220px;position:relative;margin-left:20px}
+  .wizard .head{left:52px;top:56px}.wizard .hair{background:#eee;border-color:#a8a8a8;left:44px;top:47px}.wizard .body{left:30px;top:125px;background:#284d89}
+  .hat{position:absolute;left:38px;top:4px;width:110px;height:90px;background:#284d89;clip-path:polygon(50% 0,94% 88%,65% 76%,18% 100%);transform:rotate(-7deg)}
+  .beard{position:absolute;left:54px;top:112px;width:66px;height:64px;background:white;clip-path:polygon(0 0,100% 0,85% 70%,65% 55%,50% 100%,35% 55%,12% 73%);z-index:6}
+  .progress{height:28px;border:4px solid #6c4c1f;border-radius:15px;overflow:hidden;background:#eee0b4;margin:18px 0}
+  .progress > div{height:100%;width:72%;background:linear-gradient(90deg,#5c9e40,#3f7d3a)}
+  .quest-map{width:min(1000px,95vw);position:relative}
+  .quest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .quest{background:var(--panel);color:var(--ink);border:5px solid var(--wood2);border-radius:12px;padding:22px;min-height:220px;cursor:pointer;transition:.2s;position:relative}
+  .quest:hover{transform:translateY(-5px) rotate(-.5deg)}
+  .quest.done{opacity:.7;filter:saturate(.6)}
+  .quest h3{color:#7e2a20;font-size:24px}
+  .icon{font-size:68px;text-align:center;margin:12px}
+  .check{position:absolute;right:12px;bottom:12px;font-size:34px;display:none}.done .check{display:block}
+  .boss-room{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,#59301e,#171016 70%);display:flex;align-items:center;justify-content:center}
+  .boss-card{width:min(900px,94vw);text-align:center}
+  .boss-title{font-size:clamp(28px,5vw,52px);font-weight:900}
+  .baby{font-size:130px;animation:bob .7s infinite alternate}
+  @keyframes bob{to{transform:translateY(-8px) rotate(2deg)}}
+  .hp{height:26px;border:4px solid #c79a39;background:#2c211c;border-radius:8px;overflow:hidden;margin:12px auto 24px;max-width:520px}
+  .hpbar{height:100%;width:100%;background:#c83f2d;transition:.5s}
+  .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .actions button{min-width:180px}
+  .big-question{font-family:Georgia,serif;font-weight:900;font-size:clamp(36px,7vw,72px);text-align:center;margin:24px 0}
+  .answer-area{position:relative;height:180px;display:flex;justify-content:center;align-items:flex-start;gap:24px}
+  .yes{background:var(--green)!important;font-size:28px;padding:18px 44px!important}
+  .no{position:relative;background:#5f5a55!important}
+  .final{position:absolute;inset:0;background:radial-gradient(circle,#245285,#111d35 70%);display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+  .confetti{position:absolute;inset:0;pointer-events:none}
+  .confetti i{position:absolute;width:10px;height:24px;background:hsl(var(--h),75%,55%);top:-30px;left:var(--x);animation:fall var(--d) linear infinite;animation-delay:var(--delay)}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+  .achievement{background:#3c2a13;border:6px solid #c29435;border-radius:14px;padding:26px;color:#f6d46c;box-shadow:0 12px 34px rgba(0,0,0,.5);max-width:760px}
+  .achievement h1{font-size:clamp(34px,6vw,64px);margin:.2em 0}
+  .achievement h2{color:white;font-size:clamp(24px,4vw,40px)}
+  .tiny{font-size:14px;opacity:.8}
+  .toast{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);background:rgba(20,15,10,.9);padding:12px 18px;border:2px solid #c59a53;border-radius:8px;display:none;z-index:50}
+  .toast.show{display:block}
+  @media (max-width:750px){
+    .cards,.quest-grid{grid-template-columns:1fr}
+    .screen{overflow:auto;align-items:flex-start}
+    .hero-wrap,.quest-map{padding-top:20px}
+    .portrait{height:170px}.person{transform:scale(.78)}
+  }
+</style>
+</head>
+<body>
+<div id="game">
+
+  <section id="menuScreen" class="screen active bg-fantasy">
+    <div class="castle">
+      <div class="tower t1"><div class="window" style="left:12px;top:32px"></div></div>
+      <div class="keep"><div class="window" style="left:32px;top:38px"></div></div>
+      <div class="tower t2"><div class="window" style="left:12px;top:32px"></div></div>
+    </div>
+    <div>
+      <div class="title-sign">
+        <div style="font-weight:900;font-size:18px;color:#fff0bf">THE</div>
+        <h1>GODFATHER</h1>
+        <div class="subtitle">QUEST</div>
+      </div>
+      <div class="menu">
+        <button onclick="showScreen('selectScreen')">▶ NIEUW SPEL</button>
+        <button onclick="toast('Er is nog geen opgeslagen avontuur.')">SPEL LADEN</button>
+        <button onclick="toast('Instellingen zijn vergrendeld door de Game Master.')">INSTELLINGEN</button>
+        <button onclick="exitGame()">SPEL AFSLUITEN</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="selectScreen" class="screen" style="background:linear-gradient(#171513,#2b2119)">
+    <div class="hero-wrap">
+      <div style="text-align:center"><div class="banner">KIES JE HELD</div></div>
+      <div class="cards">
+        <div class="card robin">
+          <div class="name-ribbon">ROBIN</div>
+          <div class="portrait"><div class="person">
+            <div class="cape"></div><div class="body"></div><div class="head"><div class="eye e1"></div><div class="eye e2"></div><div class="mouth"></div></div><div class="hair"></div>
+          </div></div>
+          <div class="stats">
+            <b>Klasse:</b> Legendarische Nonkel<br>
+            <b>Kracht:</b> <span class="stars">★★★★☆</span><br>
+            <b>Humor:</b> <span class="stars">★★★★★</span><br>
+            <b>Geduld:</b> <span class="stars">★★★☆☆</span><br>
+            <b>Peter-skills:</b> ???<br>
+            <b>Betrouwbaarheid:</b> <span class="stars">★★★★★</span>
+          </div>
+          <button class="rpg-btn choose" onclick="selectHero('Robin')">KIES ROBIN</button>
+        </div>
+
+        <div class="card dieter">
+          <div class="name-ribbon">DIETER</div>
+          <div class="portrait"><div class="person">
+            <div class="cape"></div><div class="body"></div><div class="head"><div class="eye e1"></div><div class="eye e2"></div><div class="mouth"></div></div><div class="hair" style="transform:rotate(7deg)"></div>
+          </div></div>
+          <div class="stats">
+            <b>Klasse:</b> Legendarische Nonkel<br>
+            <b>Kracht:</b> <span class="stars">★★★★★</span><br>
+            <b>Humor:</b> <span class="stars">★★★★☆</span><br>
+            <b>Geduld:</b> <span class="stars">★★★★☆</span><br>
+            <b>Peter-skills:</b> ???<br>
+            <b>Betrouwbaarheid:</b> <span class="stars">★★★★★</span>
+          </div>
+          <button class="rpg-btn choose" onclick="selectHero('Dieter')">KIES DIETER</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="introScreen" class="screen" style="background:linear-gradient(#0f2545,#1e4763)">
+    <div class="dialog">
+      <div class="wizard">
+        <div class="hat"></div><div class="body"></div><div class="head"><div class="eye e1"></div><div class="eye e2"></div><div class="mouth"></div></div><div class="hair"></div><div class="beard"></div>
+      </div>
+      <h2>Welkom, <span class="heroName">avonturier</span>!</h2>
+      <p>Er komt binnenkort een nieuwe speler bij onze party...</p>
+      <p><b>Deze speler is nog aan het downloaden.</b></p>
+      <div class="progress"><div></div></div>
+      <p style="text-align:right"><b>72%</b></p>
+      <p>Elke nieuwe speler heeft iemand nodig die hem door deze vreemde wereld helpt begeleiden.</p>
+      <button class="rpg-btn" onclick="showScreen('questScreen')">START DE TUTORIAL</button>
+    </div>
+  </section>
+
+  <section id="questScreen" class="screen" style="background:linear-gradient(#72bced 0 45%,#7cb862 45%)">
+    <div class="quest-map">
+      <div style="text-align:center"><div class="banner">TUTORIAL QUESTS</div></div>
+      <div class="quest-grid">
+        <div class="quest" id="q1" onclick="completeQuest(1)">
+          <h3>QUEST 01</h3><div class="icon">🍼</div>
+          <p>Haal de legendarische fles op.</p><div class="check">✅</div>
+        </div>
+        <div class="quest" id="q2" onclick="completeQuest(2)">
+          <h3>QUEST 02</h3><div class="icon">🧸</div>
+          <p>Bescherm de heilige teddy.</p><div class="check">✅</div>
+        </div>
+        <div class="quest" id="q3" onclick="startBoss()">
+          <h3>QUEST 03</h3><div class="icon">👶</div>
+          <p>Overleef de huilende baas.</p><div class="check">✅</div>
+        </div>
+      </div>
+      <p style="text-align:center;margin-top:22px;font-weight:900">Voltooi alle drie de quests.</p>
+    </div>
+  </section>
+
+  <section id="bossScreen" class="screen" style="padding:0">
+    <div class="boss-room">
+      <div class="boss-card">
+        <div class="banner">BOSS FIGHT!</div>
+        <div class="boss-title">THE CRYING ONE</div>
+        <div>LVL. ???</div>
+        <div class="baby">😭</div>
+        <div class="hp"><div id="hpbar" class="hpbar"></div></div>
+        <div class="actions">
+          <button class="rpg-btn" onclick="hitBoss('voeden')">🍼 VOEDEN</button>
+          <button class="rpg-btn" onclick="hitBoss('wiegen')">🪑 WIEGEN</button>
+          <button class="rpg-btn" onclick="hitBoss('grap')">💬 STOMME PAPA-GRAP</button>
+        </div>
+        <div id="bossMsg" style="min-height:48px;margin-top:20px;font-size:24px;font-weight:900;color:#ffd166"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tutorialDone" class="screen" style="background:linear-gradient(#101d34,#243d58)">
+    <div class="dialog">
+      <div class="wizard">
+        <div class="hat"></div><div class="body"></div><div class="head"><div class="eye e1"></div><div class="eye e2"></div><div class="mouth"></div></div><div class="hair"></div><div class="beard"></div>
+      </div>
+      <h2>TUTORIAL VOLTOOID!</h2>
+      <p>✅ Kracht getest.</p>
+      <p>✅ Moed getest.</p>
+      <p>✅ Humor... twijfelachtig.</p>
+      <br>
+      <p><b>Er blijft nog maar één laatste quest over...</b></p>
+      <button class="rpg-btn" onclick="showScreen('revealScreen')">DOORGAAN</button>
+    </div>
+  </section>
+
+  <section id="revealScreen" class="screen" style="background:radial-gradient(circle at 50% 75%,#f0c35f 0 12%,#171a29 40%,#0c0e16 70%)">
+    <div class="dialog" style="max-width:860px">
+      <div class="banner">NIEUWE HOOFDQUEST</div>
+      <p style="font-size:20px;text-align:center">Er zal binnenkort een nieuwe avonturier onze party komen versterken.</p>
+      <p style="font-size:20px;text-align:center">En elke kleine avonturier heeft iemand nodig waarop hij altijd kan rekenen.</p>
+      <div class="big-question">WIL JIJ MIJN PETER ZIJN?</div>
+      <div class="answer-area" id="answerArea">
+        <button class="rpg-btn yes" onclick="acceptQuest()">❤️ JA!</button>
+        <button class="rpg-btn no" id="noBtn" onmouseenter="moveNo()" onclick="moveNo()">NEE...</button>
+      </div>
+      <div class="tiny" style="text-align:center">Pssst... er is maar één juist antwoord.</div>
+    </div>
+  </section>
+
+  <section id="finalScreen" class="screen" style="padding:0">
+    <div class="final">
+      <div class="confetti" id="confetti"></div>
+      <div class="achievement">
+        <div class="banner">QUEST GEACCEPTEERD!</div>
+        <h2>ACHIEVEMENT UNLOCKED</h2>
+        <h1>🛡️ GODFATHER</h1>
+        <p style="font-size:22px">Legendarische rol ontgrendeld.</p>
+        <p>Looptijd: <b>levenslang</b></p>
+        <hr style="border:none;border-top:2px solid #c29435;margin:24px 0">
+        <h2><span class="heroName"></span> heeft de quest aanvaard.</h2>
+        <p style="font-size:22px">PLAYER 2 JOINT BINNENKORT DE PARTY</p>
+        <button class="rpg-btn" onclick="restartGame()">OPNIEUW SPELEN</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+let hero = "";
+let questsDone = new Set();
+let bossHits = 0;
+let noMoves = 0;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function exitGame(){
+  toast("Weet je het zeker? Deze quest kan je leven veranderen...");
+  setTimeout(()=>toast("Nee? Goed. Kies dan maar 'NIEUW SPEL' 😉"),1400);
+}
+
+function selectHero(name){
+  hero=name;
+  document.querySelectorAll('.heroName').forEach(el=>el.textContent=name);
+  showScreen('introScreen');
+}
+
+function completeQuest(n){
+  if(n===3){ startBoss(); return; }
+  questsDone.add(n);
+  document.getElementById('q'+n).classList.add('done');
+  if(questsDone.has(1)&&questsDone.has(2)&&questsDone.has(3)){
+    setTimeout(()=>showScreen('tutorialDone'),600);
+  }
+}
+
+function startBoss(){
+  showScreen('bossScreen');
+}
+
+function hitBoss(type){
+  bossHits++;
+  const hp=Math.max(0,100-bossHits*34);
+  document.getElementById('hpbar').style.width=hp+'%';
+  const msg=document.getElementById('bossMsg');
+  const texts={
+    voeden:"CRITICAL HIT! +100 Troost",
+    wiegen:"SUPER EFFECTIEF! De huilmeter daalt!",
+    grap:"PAPA-GRAP! Onverwacht... maar het werkt."
+  };
+  msg.textContent=texts[type];
+  if(bossHits>=3){
+    msg.textContent="BOSS VERSLAGEN! De baby stopt met huilen.";
+    questsDone.add(3);
+    document.getElementById('q3').classList.add('done');
+    setTimeout(()=>showScreen('tutorialDone'),1100);
+  }
+}
+
+function moveNo(){
+  const btn=document.getElementById('noBtn');
+  const area=document.getElementById('answerArea');
+  noMoves++;
+  if(noMoves>=4){
+    btn.textContent="JA, NATUURLIJK";
+    btn.classList.remove('no');
+    btn.classList.add('yes');
+    btn.onmouseenter=null;
+    btn.onclick=acceptQuest;
+    btn.style.position='relative';
+    btn.style.left='0';btn.style.top='0';
+    return;
+  }
+  const maxX=Math.max(0, area.clientWidth-btn.offsetWidth-10);
+  const maxY=Math.max(0, area.clientHeight-btn.offsetHeight-10);
+  btn.style.position='absolute';
+  btn.style.left=Math.random()*maxX+'px';
+  btn.style.top=Math.random()*maxY+'px';
+}
+
+function acceptQuest(){
+  showScreen('finalScreen');
+  makeConfetti();
+}
+
+function makeConfetti(){
+  const box=document.getElementById('confetti');
+  box.innerHTML='';
+  for(let i=0;i<70;i++){
+    const c=document.createElement('i');
+    c.style.setProperty('--x',Math.random()*100+'%');
+    c.style.setProperty('--h',Math.floor(Math.random()*360));
+    c.style.setProperty('--d',(2.8+Math.random()*3)+'s');
+    c.style.setProperty('--delay',(-Math.random()*5)+'s');
+    box.appendChild(c);
+  }
+}
+
+function restartGame(){
+  questsDone.clear();bossHits=0;noMoves=0;
+  document.getElementById('hpbar').style.width='100%';
+  document.getElementById('bossMsg').textContent='';
+  document.querySelectorAll('.quest').forEach(q=>q.classList.remove('done'));
+  const n=document.getElementById('noBtn');
+  n.textContent='NEE...';n.className='rpg-btn no';n.style='';n.onmouseenter=moveNo;n.onclick=moveNo;
+  showScreen('menuScreen');
+}
+</script>
+</body>
+</html>
