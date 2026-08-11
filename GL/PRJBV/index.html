@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2f3138">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title></title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="handheld-page">
+  <main class="handheld" id="handheld">
+    <div class="handheld-top-detail" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+
+    <section class="screen-bezel" aria-label="Spelscherm">
+      <div class="power-light" aria-hidden="true"></div>
+      <div class="screen-stage" id="screen-stage">
+        <iframe id="game-frame" src="game-screen.html" title="Project Baby" allow="autoplay"></iframe>
+      </div>
+      <div class="screen-detail" aria-hidden="true"><i></i><i></i></div>
+    </section>
+
+    <section class="hardware-controls" id="hardware-controls" aria-label="Gamebesturing">
+      <div class="dpad" aria-label="D-pad">
+        <button class="hardware-button dpad-up" data-input="up" type="button"></button>
+        <button class="hardware-button dpad-left" data-input="left" type="button"></button>
+        <span class="dpad-center" aria-hidden="true"></span>
+        <button class="hardware-button dpad-right" data-input="right" type="button"></button>
+        <button class="hardware-button dpad-down" data-input="down" type="button"></button>
+      </div>
+
+      <div class="action-cluster">
+        <button class="hardware-button action-button action-b" data-input="b" type="button"></button>
+        <button class="hardware-button action-button action-a" data-input="a" type="button"></button>
+      </div>
+
+      <div class="speaker" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </section>
+
+    <p class="control-hint" id="control-hint"></p>
+    <div class="handheld-bottom-detail" aria-hidden="true"></div>
+  </main>
+
+  <div class="handheld-flash" id="handheld-flash" aria-hidden="true"></div>
+  <script src="dialogue.js"></script>
+  <script src="handheld.js"></script>
+</body>
+</html>
